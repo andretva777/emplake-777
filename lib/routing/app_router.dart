@@ -1,4 +1,3 @@
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -78,7 +77,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         ],
       ),
     ],
-    errorBuilder: (context, state) => const SizedBox.shrink(),
+    // Rota desconhecida: volta para a última página em vez de mostrar erro.
     onException: (context, state, router) => router.go(lastRoute()),
   );
   ref.onDispose(router.dispose);
