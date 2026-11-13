@@ -1,0 +1,816 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart' as intl;
+
+import 'app_localizations_en.dart';
+import 'app_localizations_es.dart';
+import 'app_localizations_pt.dart';
+
+// ignore_for_file: type=lint
+
+/// Callers can lookup localized strings with an instance of AppLocalizations
+/// returned by `AppLocalizations.of(context)`.
+///
+/// Applications need to include `AppLocalizations.delegate()` in their app's
+/// `localizationDelegates` list, and the locales they support in the app's
+/// `supportedLocales` list. For example:
+///
+/// ```dart
+/// import 'l10n/app_localizations.dart';
+///
+/// return MaterialApp(
+///   localizationsDelegates: AppLocalizations.localizationsDelegates,
+///   supportedLocales: AppLocalizations.supportedLocales,
+///   home: MyApplicationHome(),
+/// );
+/// ```
+///
+/// ## Update pubspec.yaml
+///
+/// Please make sure to update your pubspec.yaml to include the following
+/// packages:
+///
+/// ```yaml
+/// dependencies:
+///   # Internationalization support.
+///   flutter_localizations:
+///     sdk: flutter
+///   intl: any # Use the pinned version from flutter_localizations
+///
+///   # Rest of dependencies
+/// ```
+///
+/// ## iOS Applications
+///
+/// iOS applications define key application metadata, including supported
+/// locales, in an Info.plist file that is built into the application bundle.
+/// To configure the locales supported by your app, you’ll need to edit this
+/// file.
+///
+/// First, open your project’s ios/Runner.xcworkspace Xcode workspace file.
+/// Then, in the Project Navigator, open the Info.plist file under the Runner
+/// project’s Runner folder.
+///
+/// Next, select the Information Property List item, select Add Item from the
+/// Editor menu, then select Localizations from the pop-up menu.
+///
+/// Select and expand the newly-created Localizations item then, for each
+/// locale your application supports, add a new item and select the locale
+/// you wish to add from the pop-up menu in the Value field. This list should
+/// be consistent with the languages listed in the AppLocalizations.supportedLocales
+/// property.
+abstract class AppLocalizations {
+  AppLocalizations(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+
+  final String localeName;
+
+  static AppLocalizations of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
+  }
+
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
+
+  /// A list of this localizations delegate along with the default localizations
+  /// delegates.
+  ///
+  /// Returns a list of localizations delegates containing this delegate along with
+  /// GlobalMaterialLocalizations.delegate, GlobalCupertinoLocalizations.delegate,
+  /// and GlobalWidgetsLocalizations.delegate.
+  ///
+  /// Additional delegates can be added by appending to this list in
+  /// MaterialApp. This list does not have to be used at all if a custom list
+  /// of delegates is preferred or required.
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
+
+  /// A list of this localizations delegate's supported locales.
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('es'),
+    Locale('pt'),
+  ];
+
+  /// No description provided for @appTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Emplake'**
+  String get appTitle;
+
+  /// No description provided for @loginTagline.
+  ///
+  /// In pt, this message translates to:
+  /// **'Use os quatro dígitos da placa para montar uma igualdade.'**
+  String get loginTagline;
+
+  /// No description provided for @groupMembersTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Integrantes do grupo'**
+  String get groupMembersTitle;
+
+  /// No description provided for @languageLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Idioma'**
+  String get languageLabel;
+
+  /// No description provided for @languageSystem.
+  ///
+  /// In pt, this message translates to:
+  /// **'Idioma do dispositivo'**
+  String get languageSystem;
+
+  /// No description provided for @navGame.
+  ///
+  /// In pt, this message translates to:
+  /// **'Jogo'**
+  String get navGame;
+
+  /// No description provided for @navProgress.
+  ///
+  /// In pt, this message translates to:
+  /// **'Progresso'**
+  String get navProgress;
+
+  /// No description provided for @navHelp.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ajuda'**
+  String get navHelp;
+
+  /// No description provided for @navSettings.
+  ///
+  /// In pt, this message translates to:
+  /// **'Configurações'**
+  String get navSettings;
+
+  /// No description provided for @levelLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nível'**
+  String get levelLabel;
+
+  /// No description provided for @levelEasy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fácil'**
+  String get levelEasy;
+
+  /// No description provided for @levelIntermediate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Intermediário'**
+  String get levelIntermediate;
+
+  /// No description provided for @levelAdvanced.
+  ///
+  /// In pt, this message translates to:
+  /// **'Avançado'**
+  String get levelAdvanced;
+
+  /// No description provided for @levelHard.
+  ///
+  /// In pt, this message translates to:
+  /// **'Difícil'**
+  String get levelHard;
+
+  /// No description provided for @levelPoints.
+  ///
+  /// In pt, this message translates to:
+  /// **'{points, plural, =1{1 ponto por placa} other{{points} pontos por placa}}'**
+  String levelPoints(int points);
+
+  /// No description provided for @plateCountry.
+  ///
+  /// In pt, this message translates to:
+  /// **'BRASIL'**
+  String get plateCountry;
+
+  /// No description provided for @leftSide.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lado esquerdo'**
+  String get leftSide;
+
+  /// No description provided for @rightSide.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lado direito'**
+  String get rightSide;
+
+  /// No description provided for @formulaLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fórmula'**
+  String get formulaLabel;
+
+  /// No description provided for @operatorsLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Operadores'**
+  String get operatorsLabel;
+
+  /// No description provided for @editHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque na linha para mover o cursor e escolha um operador.'**
+  String get editHint;
+
+  /// No description provided for @verify.
+  ///
+  /// In pt, this message translates to:
+  /// **'Verificar'**
+  String get verify;
+
+  /// No description provided for @skip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pular'**
+  String get skip;
+
+  /// No description provided for @nextPlate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Próxima placa'**
+  String get nextPlate;
+
+  /// No description provided for @clear.
+  ///
+  /// In pt, this message translates to:
+  /// **'Limpar'**
+  String get clear;
+
+  /// No description provided for @backspace.
+  ///
+  /// In pt, this message translates to:
+  /// **'Apagar'**
+  String get backspace;
+
+  /// No description provided for @moveLeft.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cursor para a esquerda'**
+  String get moveLeft;
+
+  /// No description provided for @moveRight.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cursor para a direita'**
+  String get moveRight;
+
+  /// No description provided for @moveEquals.
+  ///
+  /// In pt, this message translates to:
+  /// **'Mover o sinal de igual para o cursor'**
+  String get moveEquals;
+
+  /// No description provided for @soundOn.
+  ///
+  /// In pt, this message translates to:
+  /// **'Som ligado'**
+  String get soundOn;
+
+  /// No description provided for @soundOff.
+  ///
+  /// In pt, this message translates to:
+  /// **'Som desligado'**
+  String get soundOff;
+
+  /// No description provided for @correctMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'{points, plural, =1{Correto! +1 ponto} other{Correto! +{points} pontos}}'**
+  String correctMessage(int points);
+
+  /// No description provided for @notEqualMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os lados são diferentes: {left} ≠ {right}'**
+  String notEqualMessage(String left, String right);
+
+  /// No description provided for @saveError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível salvar na nuvem. Verifique a conexão.'**
+  String get saveError;
+
+  /// No description provided for @errEmptySide.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cada lado do sinal de igual precisa de pelo menos um dígito.'**
+  String get errEmptySide;
+
+  /// No description provided for @errMissingOperator.
+  ///
+  /// In pt, this message translates to:
+  /// **'Falta um operador entre dois valores (os dígitos não podem ser unidos).'**
+  String get errMissingOperator;
+
+  /// No description provided for @errMissingOperand.
+  ///
+  /// In pt, this message translates to:
+  /// **'Há um operador sem valor para operar.'**
+  String get errMissingOperand;
+
+  /// No description provided for @errUnbalanced.
+  ///
+  /// In pt, this message translates to:
+  /// **'O símbolo {symbol} está sem o seu par.'**
+  String errUnbalanced(String symbol);
+
+  /// No description provided for @errUnexpected.
+  ///
+  /// In pt, this message translates to:
+  /// **'A expressão está incompleta.'**
+  String get errUnexpected;
+
+  /// No description provided for @errDivisionByZero.
+  ///
+  /// In pt, this message translates to:
+  /// **'Divisão por zero.'**
+  String get errDivisionByZero;
+
+  /// No description provided for @errNonIntegerDivision.
+  ///
+  /// In pt, this message translates to:
+  /// **'Neste nível a divisão precisa ter resultado inteiro.'**
+  String get errNonIntegerDivision;
+
+  /// No description provided for @errNegativeRoot.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não existe raiz quadrada real de número negativo.'**
+  String get errNegativeRoot;
+
+  /// No description provided for @errInvalidFactorial.
+  ///
+  /// In pt, this message translates to:
+  /// **'O fatorial só vale para inteiros de 0 a 18.'**
+  String get errInvalidFactorial;
+
+  /// No description provided for @errInvalidPower.
+  ///
+  /// In pt, this message translates to:
+  /// **'Essa potência não tem resultado real.'**
+  String get errInvalidPower;
+
+  /// No description provided for @errOverflow.
+  ///
+  /// In pt, this message translates to:
+  /// **'O resultado é grande demais.'**
+  String get errOverflow;
+
+  /// No description provided for @errNotAllowed.
+  ///
+  /// In pt, this message translates to:
+  /// **'O operador {symbol} não é permitido neste nível.'**
+  String errNotAllowed(String symbol);
+
+  /// No description provided for @skipDialogTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Placa pulada'**
+  String get skipDialogTitle;
+
+  /// No description provided for @skipSolutionIntro.
+  ///
+  /// In pt, this message translates to:
+  /// **'Uma solução possível era:'**
+  String get skipSolutionIntro;
+
+  /// No description provided for @continueLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Continuar'**
+  String get continueLabel;
+
+  /// No description provided for @close.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fechar'**
+  String get close;
+
+  /// No description provided for @cancel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cancelar'**
+  String get cancel;
+
+  /// No description provided for @loadingPlate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sorteando uma placa…'**
+  String get loadingPlate;
+
+  /// No description provided for @loadingData.
+  ///
+  /// In pt, this message translates to:
+  /// **'Carregando…'**
+  String get loadingData;
+
+  /// No description provided for @loadError.
+  ///
+  /// In pt, this message translates to:
+  /// **'Não foi possível carregar os dados da nuvem.'**
+  String get loadError;
+
+  /// No description provided for @retry.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tentar novamente'**
+  String get retry;
+
+  /// No description provided for @allSolved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você resolveu todas as placas deste nível!'**
+  String get allSolved;
+
+  /// No description provided for @scoreLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pontos'**
+  String get scoreLabel;
+
+  /// No description provided for @solvedLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Resolvidas'**
+  String get solvedLabel;
+
+  /// No description provided for @skippedLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Puladas'**
+  String get skippedLabel;
+
+  /// No description provided for @progressTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Progresso'**
+  String get progressTitle;
+
+  /// No description provided for @solvedPlatesTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Placas resolvidas'**
+  String get solvedPlatesTitle;
+
+  /// No description provided for @noSolvedYet.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nenhuma placa resolvida ainda. Vá jogar!'**
+  String get noSolvedYet;
+
+  /// No description provided for @rankingTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ranking'**
+  String get rankingTitle;
+
+  /// No description provided for @rankingEmpty.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ainda não há pontuações.'**
+  String get rankingEmpty;
+
+  /// No description provided for @rankingYou.
+  ///
+  /// In pt, this message translates to:
+  /// **'você'**
+  String get rankingYou;
+
+  /// No description provided for @anonymousPlayer.
+  ///
+  /// In pt, this message translates to:
+  /// **'Jogador'**
+  String get anonymousPlayer;
+
+  /// No description provided for @refresh.
+  ///
+  /// In pt, this message translates to:
+  /// **'Atualizar'**
+  String get refresh;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Configurações'**
+  String get settingsTitle;
+
+  /// No description provided for @appearanceSection.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aparência'**
+  String get appearanceSection;
+
+  /// No description provided for @themeMode.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tema'**
+  String get themeMode;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sistema'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In pt, this message translates to:
+  /// **'Claro'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escuro'**
+  String get themeDark;
+
+  /// No description provided for @fontSize.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tamanho da fonte'**
+  String get fontSize;
+
+  /// No description provided for @fontFamily.
+  ///
+  /// In pt, this message translates to:
+  /// **'Tipo da fonte'**
+  String get fontFamily;
+
+  /// No description provided for @fontPreview.
+  ///
+  /// In pt, this message translates to:
+  /// **'Prévia: (5 − 2)! = 6 × 1'**
+  String get fontPreview;
+
+  /// No description provided for @seedColor.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cor do tema'**
+  String get seedColor;
+
+  /// No description provided for @customColor.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cor personalizada'**
+  String get customColor;
+
+  /// No description provided for @presetThemes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Temas prontos'**
+  String get presetThemes;
+
+  /// No description provided for @presetOcean.
+  ///
+  /// In pt, this message translates to:
+  /// **'Oceano'**
+  String get presetOcean;
+
+  /// No description provided for @presetForest.
+  ///
+  /// In pt, this message translates to:
+  /// **'Floresta'**
+  String get presetForest;
+
+  /// No description provided for @presetSunset.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pôr do sol'**
+  String get presetSunset;
+
+  /// No description provided for @presetLavender.
+  ///
+  /// In pt, this message translates to:
+  /// **'Lavanda'**
+  String get presetLavender;
+
+  /// No description provided for @presetGraphite.
+  ///
+  /// In pt, this message translates to:
+  /// **'Grafite'**
+  String get presetGraphite;
+
+  /// No description provided for @soundSection.
+  ///
+  /// In pt, this message translates to:
+  /// **'Som'**
+  String get soundSection;
+
+  /// No description provided for @soundEffects.
+  ///
+  /// In pt, this message translates to:
+  /// **'Efeitos sonoros'**
+  String get soundEffects;
+
+  /// No description provided for @soundEffectsSubtitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desligado por padrão'**
+  String get soundEffectsSubtitle;
+
+  /// No description provided for @languageSection.
+  ///
+  /// In pt, this message translates to:
+  /// **'Idioma'**
+  String get languageSection;
+
+  /// No description provided for @accountSection.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conta'**
+  String get accountSection;
+
+  /// No description provided for @signedInAs.
+  ///
+  /// In pt, this message translates to:
+  /// **'Conectado como {email}'**
+  String signedInAs(String email);
+
+  /// No description provided for @signOut.
+  ///
+  /// In pt, this message translates to:
+  /// **'Sair'**
+  String get signOut;
+
+  /// No description provided for @resetSettings.
+  ///
+  /// In pt, this message translates to:
+  /// **'Restaurar padrões'**
+  String get resetSettings;
+
+  /// No description provided for @helpTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Como jogar'**
+  String get helpTitle;
+
+  /// No description provided for @helpGoalTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Objetivo'**
+  String get helpGoalTitle;
+
+  /// No description provided for @helpGoal.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cada placa tem 4 dígitos. Sem mudar a ordem deles, insira operadores e posicione o sinal de = para formar uma igualdade verdadeira. Exemplo: com 8131, √(8 + 1) = 3 ** 1.'**
+  String get helpGoal;
+
+  /// No description provided for @helpHowTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Como montar'**
+  String get helpHowTitle;
+
+  /// No description provided for @helpHow.
+  ///
+  /// In pt, this message translates to:
+  /// **'Toque em qualquer ponto da linha para posicionar o cursor e depois toque em um operador para inseri-lo ali. Use ⌫ para apagar o operador antes do cursor e o botão = para trazer o sinal de igual até o cursor.'**
+  String get helpHow;
+
+  /// No description provided for @helpScaleTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'A balança'**
+  String get helpScaleTitle;
+
+  /// No description provided for @helpScale.
+  ///
+  /// In pt, this message translates to:
+  /// **'A balança mostra o valor de cada lado. Quando ela fica equilibrada, a igualdade está certa: toque em Verificar para pontuar.'**
+  String get helpScale;
+
+  /// No description provided for @helpRulesTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Regras'**
+  String get helpRulesTitle;
+
+  /// No description provided for @helpRules.
+  ///
+  /// In pt, this message translates to:
+  /// **'Os dígitos não podem ser unidos (1 e 2 não formam 12) e todos precisam ser usados. Só o nível Fácil aceita divisão com resultado não inteiro.'**
+  String get helpRules;
+
+  /// No description provided for @helpSkipTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pular'**
+  String get helpSkipTitle;
+
+  /// No description provided for @helpSkip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Achou a placa difícil? Toque em Pular para ver uma solução possível e receber outra placa. Placas já resolvidas não aparecem de novo.'**
+  String get helpSkip;
+
+  /// No description provided for @helpLevelsTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Níveis'**
+  String get helpLevelsTitle;
+
+  /// No description provided for @helpKeyboardTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Teclado'**
+  String get helpKeyboardTitle;
+
+  /// No description provided for @helpKeyboard.
+  ///
+  /// In pt, this message translates to:
+  /// **'No computador você também pode usar o teclado: + - * / ( ) ! ^ | =, as setas, Backspace e Enter.'**
+  String get helpKeyboard;
+
+  /// No description provided for @opSqrt.
+  ///
+  /// In pt, this message translates to:
+  /// **'raiz quadrada'**
+  String get opSqrt;
+
+  /// No description provided for @opCbrt.
+  ///
+  /// In pt, this message translates to:
+  /// **'raiz cúbica'**
+  String get opCbrt;
+
+  /// No description provided for @opFact.
+  ///
+  /// In pt, this message translates to:
+  /// **'fatorial'**
+  String get opFact;
+
+  /// No description provided for @opPow.
+  ///
+  /// In pt, this message translates to:
+  /// **'potência'**
+  String get opPow;
+
+  /// No description provided for @opAbs.
+  ///
+  /// In pt, this message translates to:
+  /// **'módulo'**
+  String get opAbs;
+
+  /// No description provided for @opFloor.
+  ///
+  /// In pt, this message translates to:
+  /// **'base (piso)'**
+  String get opFloor;
+
+  /// No description provided for @opCeil.
+  ///
+  /// In pt, this message translates to:
+  /// **'teto'**
+  String get opCeil;
+}
+
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
+  const _AppLocalizationsDelegate();
+
+  @override
+  Future<AppLocalizations> load(Locale locale) {
+    return SynchronousFuture<AppLocalizations>(lookupAppLocalizations(locale));
+  }
+
+  @override
+  bool isSupported(Locale locale) =>
+      <String>['en', 'es', 'pt'].contains(locale.languageCode);
+
+  @override
+  bool shouldReload(_AppLocalizationsDelegate old) => false;
+}
+
+AppLocalizations lookupAppLocalizations(Locale locale) {
+  // Lookup logic when only language code is specified.
+  switch (locale.languageCode) {
+    case 'en':
+      return AppLocalizationsEn();
+    case 'es':
+      return AppLocalizationsEs();
+    case 'pt':
+      return AppLocalizationsPt();
+  }
+
+  throw FlutterError(
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
+}
