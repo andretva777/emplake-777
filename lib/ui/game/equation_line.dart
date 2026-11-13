@@ -1,125 +1,276 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
 import '../../game/tokens.dart';
+import '../../l10n/app_localizations.dart';
 import '../../settings/app_theme.dart';
+import '../l10n_extensions.dart';
+import 'drag_payload.dart';
 
 /// Linha em que a equação é montada: os quatro dígitos fixos, o sinal de
-/// igual e os operadores inseridos, com um cursor que indica onde o próximo
-/// operador entra.
+/// igual e os operadores soltos pelo jogador.
 ///
-/// Tocar na metade esquerda/direita de uma peça põe o cursor antes/depois
-/// dela. Toque longo (ou clique com o botão direito) remove um operador.
-class EquationLine extends StatelessWidget {
+/// Operadores (do teclado ou da própria linha) e o `=` são arrastados e
+/// soltos entre duas peças; uma marca mostra onde a peça vai entrar. Soltar
+/// fora da linha devolve o operador ao teclado; tocar num operador também.
+class EquationLine extends StatefulWidget {
   const EquationLine({
     super.key,
     required this.pieces,
-    required this.cursor,
     required this.locked,
     required this.solved,
     required this.unit,
-    required this.onCursor,
+    required this.onDrop,
+    required this.onCancel,
     required this.onRemove,
   });
 
   final List<Piece> pieces;
-  final int cursor;
 
-  /// Sem edição (placa resolvida): o cursor some.
+  /// Sem edição (placa resolvida).
   final bool locked;
   final bool solved;
 
   /// Fator de escala das peças (1.0 = tamanho padrão).
   final double unit;
-  final ValueChanged<int> onCursor;
+
+  /// Uma peça foi solta na posição [gap] (0 a `pieces.length`).
+  final void Function(DragPayload payload, int gap) onDrop;
+
+  /// Um arrasto terminou fora da linha; [pointer] é a posição global.
+  final void Function(DragPayload payload, Offset pointer) onCancel;
+
+  /// Toque em um operador da linha.
   final ValueChanged<int> onRemove;
 
   /// Chave global da peça, usada para localizar o operador na tela quando ele
   /// "voa" de volta para o teclado.
   static GlobalKey keyFor(Piece piece) => GlobalObjectKey(piece);
 
-  String get _spoken => pieces
-      .map((p) => switch (p) {
-            DigitPiece(:final value) => '$value',
-            EqualsPiece() => '=',
-            OpPiece(:final tok) => tok.symbol,
-          })
-      .join(' ');
+  @override
+  State<EquationLine> createState() => _EquationLineState();
+}
+
+class _EquationLineState extends State<EquationLine> {
+  /// Posição em que a peça arrastada entraria, e a peça que a calculou.
+  int? _hoverGap;
+  int? _hoverOwner;
+
+  void _hover(int owner, int gap) {
+    if (_hoverGap == gap && _hoverOwner == owner) return;
+    setState(() {
+      _hoverGap = gap;
+      _hoverOwner = owner;
+    });
+  }
+
+  void _leave(int owner) {
+    // Só limpa se a marca ainda é desta peça (a vizinha pode já ter assumido).
+    if (_hoverOwner != owner) return;
+    setState(() {
+      _hoverGap = null;
+      _hoverOwner = null;
+    });
+  }
+
+  void _drop(DragPayload payload, int gap) {
+    setState(() {
+      _hoverGap = null;
+      _hoverOwner = null;
+    });
+    widget.onDrop(payload, gap);
+  }
+
+  @override
+  void didUpdateWidget(EquationLine oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.locked) _hoverGap = _hoverOwner = null;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final pieces = widget.pieces;
     final last = pieces.length - 1;
-    return Semantics(
-      label: _spoken,
-      container: true,
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        runSpacing: 10 * unit,
-        children: [
-          for (final (i, piece) in pieces.indexed)
-            _Slot(
-              key: ValueKey(piece.id),
-              piece: piece,
-              unit: unit,
-              solved: solved,
-              caretBefore: !locked && cursor == i,
-              caretAfter: !locked && i == last && cursor == pieces.length,
-              isLast: i == last,
-              onTapSide: (after) => onCursor(after ? i + 1 : i),
-              onRemove: piece is OpPiece ? () => onRemove(piece.id) : null,
-            ),
-        ],
-      ),
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      runSpacing: 10 * widget.unit,
+      children: [
+        for (final (i, piece) in pieces.indexed)
+          _Slot(
+            key: ValueKey(piece.id),
+            piece: piece,
+            index: i,
+            unit: widget.unit,
+            solved: widget.solved,
+            locked: widget.locked,
+            gapBefore: _hoverGap == i,
+            gapAfter: i == last && _hoverGap == pieces.length,
+            isLast: i == last,
+            l10n: l10n,
+            onHover: (gap) => _hover(i, gap),
+            onLeave: () => _leave(i),
+            onDrop: _drop,
+            onCancel: widget.onCancel,
+            onRemove: piece is OpPiece ? () => widget.onRemove(piece.id) : null,
+            onShift: piece is DigitPiece
+                ? null
+                : (delta) => _drop(
+                      DragPayload.fromLine(
+                        piece.id,
+                        tok: piece is OpPiece ? piece.tok : null,
+                      ),
+                      // `gap` conta posições antes da remoção da peça.
+                      delta < 0 ? i - 1 : i + 2,
+                    ),
+            canShiftLeft: i > 0,
+            canShiftRight: i < last,
+          ),
+      ],
     );
   }
 }
 
-/// Uma peça com o espaço do cursor à sua esquerda (e, na última peça, também
-/// à direita). Manter o cursor junto da peça evita que ele quebre de linha
-/// sozinho.
+/// Uma peça com o espaço de soltura à sua esquerda (e, na última peça, também
+/// à direita). Manter a marca junto da peça evita que ela quebre de linha
+/// sozinha.
 class _Slot extends StatelessWidget {
   const _Slot({
     super.key,
     required this.piece,
+    required this.index,
     required this.unit,
     required this.solved,
-    required this.caretBefore,
-    required this.caretAfter,
+    required this.locked,
+    required this.gapBefore,
+    required this.gapAfter,
     required this.isLast,
-    required this.onTapSide,
+    required this.l10n,
+    required this.onHover,
+    required this.onLeave,
+    required this.onDrop,
+    required this.onCancel,
     required this.onRemove,
+    required this.onShift,
+    required this.canShiftLeft,
+    required this.canShiftRight,
   });
 
   final Piece piece;
+  final int index;
   final double unit;
   final bool solved;
-  final bool caretBefore;
-  final bool caretAfter;
+  final bool locked;
+  final bool gapBefore;
+  final bool gapAfter;
   final bool isLast;
-  final ValueChanged<bool> onTapSide;
+  final AppLocalizations l10n;
+  final ValueChanged<int> onHover;
+  final VoidCallback onLeave;
+  final void Function(DragPayload payload, int gap) onDrop;
+  final void Function(DragPayload payload, Offset pointer) onCancel;
   final VoidCallback? onRemove;
+  final ValueChanged<int>? onShift;
+  final bool canShiftLeft;
+  final bool canShiftRight;
+
+  String get _spoken => switch (piece) {
+        DigitPiece(:final value) => '$value',
+        EqualsPiece() => '=',
+        OpPiece(:final tok) => l10n.operatorName(tok) ?? tok.symbol,
+      };
+
+  /// Em qual lado desta peça o ponteiro está, e portanto em que posição da
+  /// linha a peça arrastada entraria.
+  int _gapFor(BuildContext context, Offset pointer) {
+    final box = context.findRenderObject() as RenderBox;
+    final local = box.globalToLocal(pointer);
+    return local.dx > box.size.width / 2 ? index + 1 : index;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ExcludeSemantics(
-      child: MouseRegion(
-        cursor: SystemMouseCursors.text,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapUp: (details) {
-            final width = context.size?.width ?? 0;
-            onTapSide(details.localPosition.dx > width / 2);
-          },
-          onLongPress: onRemove,
-          onSecondaryTap: onRemove,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _Caret(active: caretBefore, unit: unit),
-              _Tile(piece: piece, unit: unit, solved: solved),
-              if (isLast) _Caret(active: caretAfter, unit: unit),
-            ],
+    final tile = _Tile(piece: piece, unit: unit, solved: solved);
+
+    Widget content = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _Gap(active: gapBefore, unit: unit),
+        _draggable(context, tile),
+        if (isLast) _Gap(active: gapAfter, unit: unit),
+      ],
+    );
+
+    if (!locked) {
+      final inner = content;
+      content = DragTarget<DragPayload>(
+        onWillAcceptWithDetails: (details) {
+          onHover(_gapFor(context, pointerOf(details.offset)));
+          return true;
+        },
+        onMove: (details) =>
+            onHover(_gapFor(context, pointerOf(details.offset))),
+        onLeave: (_) => onLeave(),
+        onAcceptWithDetails: (details) => onDrop(
+          details.data,
+          _gapFor(context, pointerOf(details.offset)),
+        ),
+        builder: (context, _, _) => inner,
+      );
+    }
+
+    final shift = onShift;
+    return Semantics(
+      label: _spoken,
+      excludeSemantics: true,
+      customSemanticsActions: locked
+          ? null
+          : {
+              if (shift != null && canShiftLeft)
+                CustomSemanticsAction(label: l10n.moveLeft): () => shift(-1),
+              if (shift != null && canShiftRight)
+                CustomSemanticsAction(label: l10n.moveRight): () => shift(1),
+              CustomSemanticsAction(label: l10n.removeOperator): ?onRemove,
+            },
+      child: content,
+    );
+  }
+
+  Widget _draggable(BuildContext context, Widget tile) {
+    final piece = this.piece;
+    if (locked || piece is DigitPiece) return tile;
+    final payload = DragPayload.fromLine(
+      piece.id,
+      tok: piece is OpPiece ? piece.tok : null,
+    );
+    return MouseRegion(
+      cursor: SystemMouseCursors.grab,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onRemove,
+        onSecondaryTap: onRemove,
+        child: Draggable<DragPayload>(
+          data: payload,
+          maxSimultaneousDrags: 1,
+          dragAnchorStrategy: (_, _, _) => kDragAnchor,
+          feedback: DragFeedback(payload: payload),
+          childWhenDragging: Opacity(
+            opacity: 0.25,
+            child: _Tile(
+              piece: piece,
+              unit: unit,
+              solved: solved,
+              keyed: false,
+              pop: false,
+            ),
           ),
+          onDragEnd: (details) {
+            if (!details.wasAccepted) {
+              onCancel(payload, pointerOf(details.offset));
+            }
+          },
+          child: tile,
         ),
       ),
     );
@@ -127,11 +278,23 @@ class _Slot extends StatelessWidget {
 }
 
 class _Tile extends StatelessWidget {
-  const _Tile({required this.piece, required this.unit, required this.solved});
+  const _Tile({
+    required this.piece,
+    required this.unit,
+    required this.solved,
+    this.keyed = true,
+    this.pop = true,
+  });
 
   final Piece piece;
   final double unit;
   final bool solved;
+
+  /// Usa a chave global da peça (só uma instância por vez pode usá-la).
+  final bool keyed;
+
+  /// Anima a entrada do operador.
+  final bool pop;
 
   @override
   Widget build(BuildContext context) {
@@ -198,11 +361,11 @@ class _Tile extends StatelessWidget {
       ),
     );
 
-    if (piece is! OpPiece) return tile;
+    if (piece is! OpPiece || !pop) return tile;
 
     // Operadores entram com um pequeno "pop".
     return TweenAnimationBuilder<double>(
-      key: EquationLine.keyFor(piece),
+      key: keyed ? EquationLine.keyFor(piece) : null,
       tween: Tween(begin: 0.3, end: 1),
       duration: MediaQuery.disableAnimationsOf(context)
           ? Duration.zero
@@ -215,73 +378,31 @@ class _Tile extends StatelessWidget {
   }
 }
 
-/// Espaço do cursor. Ocupa sempre a mesma largura para que a linha não
-/// "pule" quando o cursor muda de lugar.
-class _Caret extends StatefulWidget {
-  const _Caret({required this.active, required this.unit});
+/// Espaço entre peças. Ocupa sempre a mesma largura para que a linha não
+/// "pule" durante o arrasto; quando ativo, mostra onde a peça entraria.
+class _Gap extends StatelessWidget {
+  const _Gap({required this.active, required this.unit});
 
   final bool active;
   final double unit;
 
   @override
-  State<_Caret> createState() => _CaretState();
-}
-
-class _CaretState extends State<_Caret> with SingleTickerProviderStateMixin {
-  late final AnimationController _blink = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 550),
-  );
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _sync();
-  }
-
-  @override
-  void didUpdateWidget(_Caret oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _sync();
-  }
-
-  void _sync() {
-    final animate = widget.active && !MediaQuery.disableAnimationsOf(context);
-    if (animate && !_blink.isAnimating) {
-      _blink.repeat(reverse: true);
-    } else if (!animate) {
-      _blink
-        ..stop()
-        ..value = 0;
-    }
-  }
-
-  @override
-  void dispose() {
-    _blink.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme.tertiary;
     return SizedBox(
-      width: 10 * widget.unit,
-      height: 60 * widget.unit,
-      child: widget.active
-          ? Center(
-              child: FadeTransition(
-                opacity: Tween(begin: 1.0, end: 0.15).animate(_blink),
-                child: Container(
-                  width: 3.5 * widget.unit,
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-            )
-          : null,
+      width: 10 * unit,
+      height: 60 * unit,
+      child: Center(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          width: 4 * unit,
+          height: active ? 60 * unit : 0,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+      ),
     );
   }
 }

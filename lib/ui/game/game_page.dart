@@ -19,9 +19,10 @@ import '../widgets/app_loader.dart';
 import '../widgets/license_plate.dart';
 import '../widgets/page_frame.dart';
 import 'balance_scale.dart';
+import 'drag_payload.dart';
 import 'equation_line.dart';
 import 'fly_back.dart';
-import 'keypad.dart';
+import 'operator_tray.dart';
 
 /// Página principal: carrega o progresso da nuvem e mostra o tabuleiro.
 class GamePage extends ConsumerStatefulWidget {
@@ -167,7 +168,7 @@ class _GameBoardState extends ConsumerState<_GameBoard> {
     final flights = <Flight>[];
     for (final piece in ref.read(gameProvider).pieces.whereType<OpPiece>()) {
       final from = globalRectOf(EquationLine.keyFor(piece));
-      final to = globalRectOf(Keypad.keyFor(piece.tok));
+      final to = globalRectOf(OperatorTray.keyFor(piece.tok));
       if (from == null || to == null) continue;
       flights.add(Flight(from: from, to: to, label: piece.tok.symbol));
     }
@@ -208,64 +209,62 @@ class _GameBoardState extends ConsumerState<_GameBoard> {
     _game.setLevel(level);
   }
 
-  /// Atalhos de teclado para quem joga no computador.
-  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
-    if (event is KeyUpEvent) return KeyEventResult.ignored;
-    final state = ref.read(gameProvider);
-    final key = event.logicalKey;
+  /// Uma peça foi solta na linha: operador novo do teclado ou peça movida.
+  void _drop(DragPayload payload, int gap) {
+    final id = payload.pieceId;
+    final tok = payload.tok;
+    if (id != null) {
+      _game.movePiece(id, gap);
+    } else if (tok != null) {
+      _game.insertAt(gap, tok);
+    }
+  }
 
+  /// O arrasto terminou fora da linha: o operador volta voando para o teclado
+  /// (e, se estava na linha, sai dela). O `=` apenas volta ao lugar.
+  void _dropped(DragPayload payload, Offset pointer) {
+    final tok = payload.tok;
+    if (tok == null) return;
+    final to = globalRectOf(OperatorTray.keyFor(tok));
+    if (to != null) {
+      playFlyBack(context, [
+        Flight(
+          from: Rect.fromCenter(
+            center: pointer,
+            width: kDragFeedbackSize.width,
+            height: kDragFeedbackSize.height,
+          ),
+          to: to,
+          label: tok.symbol,
+        ),
+      ]);
+      ref.read(soundServiceProvider).play(SoundEffect.whoosh);
+    }
+    final id = payload.pieceId;
+    if (id != null) _game.removePiece(id);
+  }
+
+  /// Toque em um operador da linha: ele volta voando para o teclado.
+  void _removePiece(int id) {
+    final piece =
+        ref.read(gameProvider).pieces.where((p) => p.id == id).firstOrNull;
+    if (piece is! OpPiece) return;
+    final from = globalRectOf(EquationLine.keyFor(piece));
+    final to = globalRectOf(OperatorTray.keyFor(piece.tok));
+    if (from != null && to != null) {
+      playFlyBack(context, [Flight(from: from, to: to, label: piece.tok.symbol)]);
+      ref.read(soundServiceProvider).play(SoundEffect.whoosh);
+    }
+    _game.removePiece(id);
+  }
+
+  /// Enter verifica a equação (ou avança, depois de acertar).
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    final key = event.logicalKey;
     if (key == LogicalKeyboardKey.enter ||
         key == LogicalKeyboardKey.numpadEnter) {
-      if (event is KeyRepeatEvent) return KeyEventResult.handled;
-      state.solved ? _next() : _game.check();
-      return KeyEventResult.handled;
-    }
-    if (key == LogicalKeyboardKey.backspace) {
-      _game.backspace();
-      return KeyEventResult.handled;
-    }
-    if (key == LogicalKeyboardKey.arrowLeft) {
-      _game.moveCursor(-1);
-      return KeyEventResult.handled;
-    }
-    if (key == LogicalKeyboardKey.arrowRight) {
-      _game.moveCursor(1);
-      return KeyEventResult.handled;
-    }
-    if (key == LogicalKeyboardKey.home) {
-      _game.setCursor(0);
-      return KeyEventResult.handled;
-    }
-    if (key == LogicalKeyboardKey.end) {
-      _game.setCursor(state.pieces.length);
-      return KeyEventResult.handled;
-    }
-
-    final char = event.character;
-    if (char == '=') {
-      _game.moveEquals();
-      return KeyEventResult.handled;
-    }
-    final tok = switch (char) {
-      '+' => Tok.plus,
-      '-' => Tok.minus,
-      '*' || 'x' || 'X' => Tok.times,
-      '/' => Tok.divide,
-      '(' => Tok.lparen,
-      ')' => Tok.rparen,
-      '!' => Tok.fact,
-      '^' => Tok.pow,
-      '|' => Tok.abs,
-      'r' || 'R' => Tok.sqrt,
-      'c' || 'C' => Tok.cbrt,
-      '[' => Tok.floorL,
-      ']' => Tok.floorR,
-      '{' => Tok.ceilL,
-      '}' => Tok.ceilR,
-      _ => null,
-    };
-    if (tok != null && state.level.allows(tok)) {
-      _game.insert(tok);
+      ref.read(gameProvider).solved ? _next() : _game.check();
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;
@@ -345,15 +344,12 @@ class _GameBoardState extends ConsumerState<_GameBoard> {
                   children: [
                     EquationLine(
                       pieces: state.pieces,
-                      cursor: state.cursor,
                       locked: !enabled,
                       solved: state.solved,
                       unit: unit,
-                      onCursor: (position) {
-                        _focus.requestFocus();
-                        _game.setCursor(position);
-                      },
-                      onRemove: _game.removePiece,
+                      onDrop: _drop,
+                      onCancel: _dropped,
+                      onRemove: _removePiece,
                     ),
                     const SizedBox(height: 10),
                     const Divider(height: 1),
@@ -377,14 +373,11 @@ class _GameBoardState extends ConsumerState<_GameBoard> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Keypad(
+        OperatorTray(
           level: state.level,
           enabled: enabled,
           canClear: state.hasOperators,
-          onInsert: _game.insert,
-          onMoveEquals: _game.moveEquals,
-          onMoveCursor: _game.moveCursor,
-          onBackspace: _game.backspace,
+          onAddToEnd: (tok) => _game.insertAt(state.pieces.length, tok),
           onClear: _clear,
         ),
         const SizedBox(height: 16),

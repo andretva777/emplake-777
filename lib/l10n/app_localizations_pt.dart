@@ -80,7 +80,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get editHint =>
-      'Toque na linha para mover o cursor e escolha um operador.';
+      'Arraste um operador até a linha de dígitos para montar a equação.';
 
   @override
   String get verify => 'Verificar';
@@ -95,16 +95,16 @@ class AppLocalizationsPt extends AppLocalizations {
   String get clear => 'Limpar';
 
   @override
-  String get backspace => 'Apagar';
+  String get addToEnd => 'Adicionar ao fim da equação';
 
   @override
-  String get moveLeft => 'Cursor para a esquerda';
+  String get moveLeft => 'Mover para a esquerda';
 
   @override
-  String get moveRight => 'Cursor para a direita';
+  String get moveRight => 'Mover para a direita';
 
   @override
-  String get moveEquals => 'Mover o sinal de igual para o cursor';
+  String get removeOperator => 'Devolver ao teclado';
 
   @override
   String get soundOn => 'Som ligado';
@@ -332,7 +332,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get helpHow =>
-      'Toque em qualquer ponto da linha para posicionar o cursor e depois toque em um operador para inseri-lo ali. Use ⌫ para apagar o operador antes do cursor e o botão = para trazer o sinal de igual até o cursor.';
+      'Arraste um operador do teclado até a linha de dígitos e solte-o entre duas peças. Arraste o sinal de = para mudá-lo de lugar. Para tirar um operador, arraste-o para fora da linha ou toque nele: ele volta voando para o teclado.';
 
   @override
   String get helpScaleTitle => 'A balança';
@@ -363,7 +363,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get helpKeyboard =>
-      'No computador você também pode usar o teclado: + - * / ( ) ! ^ | =, as setas, Backspace e Enter.';
+      'No computador, a tecla Enter verifica a equação (e avança para a próxima placa depois de acertar).';
 
   @override
   String get opSqrt => 'raiz quadrada';

@@ -34,7 +34,6 @@ Future<void> main() async {
         'plate': plate,
         'pieces': query['pieces'] ??
             '${plate.substring(0, 2)}=${plate.substring(2)}',
-        'cursor': 1,
         'solved': false,
       }),
     );

@@ -223,7 +223,7 @@ abstract class AppLocalizations {
   /// No description provided for @editHint.
   ///
   /// In pt, this message translates to:
-  /// **'Toque na linha para mover o cursor e escolha um operador.'**
+  /// **'Arraste um operador até a linha de dígitos para montar a equação.'**
   String get editHint;
 
   /// No description provided for @verify.
@@ -250,29 +250,29 @@ abstract class AppLocalizations {
   /// **'Limpar'**
   String get clear;
 
-  /// No description provided for @backspace.
+  /// No description provided for @addToEnd.
   ///
   /// In pt, this message translates to:
-  /// **'Apagar'**
-  String get backspace;
+  /// **'Adicionar ao fim da equação'**
+  String get addToEnd;
 
   /// No description provided for @moveLeft.
   ///
   /// In pt, this message translates to:
-  /// **'Cursor para a esquerda'**
+  /// **'Mover para a esquerda'**
   String get moveLeft;
 
   /// No description provided for @moveRight.
   ///
   /// In pt, this message translates to:
-  /// **'Cursor para a direita'**
+  /// **'Mover para a direita'**
   String get moveRight;
 
-  /// No description provided for @moveEquals.
+  /// No description provided for @removeOperator.
   ///
   /// In pt, this message translates to:
-  /// **'Mover o sinal de igual para o cursor'**
-  String get moveEquals;
+  /// **'Devolver ao teclado'**
+  String get removeOperator;
 
   /// No description provided for @soundOn.
   ///
@@ -679,7 +679,7 @@ abstract class AppLocalizations {
   /// No description provided for @helpHow.
   ///
   /// In pt, this message translates to:
-  /// **'Toque em qualquer ponto da linha para posicionar o cursor e depois toque em um operador para inseri-lo ali. Use ⌫ para apagar o operador antes do cursor e o botão = para trazer o sinal de igual até o cursor.'**
+  /// **'Arraste um operador do teclado até a linha de dígitos e solte-o entre duas peças. Arraste o sinal de = para mudá-lo de lugar. Para tirar um operador, arraste-o para fora da linha ou toque nele: ele volta voando para o teclado.'**
   String get helpHow;
 
   /// No description provided for @helpScaleTitle.
@@ -733,7 +733,7 @@ abstract class AppLocalizations {
   /// No description provided for @helpKeyboard.
   ///
   /// In pt, this message translates to:
-  /// **'No computador você também pode usar o teclado: + - * / ( ) ! ^ | =, as setas, Backspace e Enter.'**
+  /// **'No computador, a tecla Enter verifica a equação (e avança para a próxima placa depois de acertar).'**
   String get helpKeyboard;
 
   /// No description provided for @opSqrt.

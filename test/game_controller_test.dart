@@ -36,7 +36,6 @@ String savedGame(String plate, String pieces, {Level level = Level.easy}) =>
       'level': level.name,
       'plate': plate,
       'pieces': pieces,
-      'cursor': 0,
       'solved': false,
     });
 
@@ -68,7 +67,7 @@ void main() {
     );
   });
 
-  test('edição: inserir, mover =, apagar e limpar', () async {
+  test('edição: soltar, mover, tirar e limpar', () async {
     final (c, _) = await setUpGame(
       prefs: {'game.demo': savedGame('8131', '81=31')},
     );
@@ -76,32 +75,38 @@ void main() {
     await game.ensureReady();
     expect(c.read(gameProvider).plate, '8131');
 
-    // √(8+1) = 3**1
-    game.setCursor(0);
-    game.insert(Tok.sqrt);
-    game.insert(Tok.lparen);
-    game.moveCursor(1);
-    game.insert(Tok.plus);
-    game.moveCursor(1);
-    game.insert(Tok.rparen);
-    game.moveCursor(2);
-    game.insert(Tok.pow);
+    // √(8+1) = 3**1, soltando um operador por vez.
+    game.insertAt(0, Tok.sqrt);
+    game.insertAt(1, Tok.lparen);
+    game.insertAt(3, Tok.plus);
+    game.insertAt(5, Tok.rparen);
+    game.insertAt(8, Tok.pow);
     expect(line(c.read(gameProvider)), 'r(8+1)=3^1');
     expect(c.read(gameProvider).latex, r'\sqrt{8 + 1} = {3}^{1}');
 
-    // Backspace passa por dígitos sem apagar e remove operadores.
-    game.backspace();
+    // Só operadores saem da linha; dígitos e '=' ficam.
+    final pieces = c.read(gameProvider).pieces;
+    game.removePiece(pieces[8].id); // ^
     expect(line(c.read(gameProvider)), 'r(8+1)=31');
-    game.backspace();
+    game.removePiece(pieces[7].id); // dígito 3
+    game.removePiece(pieces[6].id); // =
     expect(line(c.read(gameProvider)), 'r(8+1)=31');
 
-    // Move o '=' para depois do último dígito e de volta.
-    game.setCursor(c.read(gameProvider).pieces.length);
-    game.moveEquals();
+    // Arrasta o '=' para o fim e de volta; soltar ao lado não muda nada.
+    final equals = c.read(gameProvider).pieces[6].id;
+    game.movePiece(equals, 9);
     expect(line(c.read(gameProvider)), 'r(8+1)31=');
-    game.setCursor(6);
-    game.moveEquals();
+    game.movePiece(equals, 9);
+    game.movePiece(equals, 8);
+    expect(line(c.read(gameProvider)), 'r(8+1)31=');
+    game.movePiece(equals, 6);
     expect(line(c.read(gameProvider)), 'r(8+1)=31');
+
+    // Dígitos não se movem; operadores podem trocar de lugar.
+    game.movePiece(c.read(gameProvider).pieces[2].id, 0);
+    expect(line(c.read(gameProvider)), 'r(8+1)=31');
+    game.movePiece(c.read(gameProvider).pieces[0].id, 3); // r -> depois do 8
+    expect(line(c.read(gameProvider)), '(8r+1)=31');
 
     game.clear();
     expect(line(c.read(gameProvider)), '81=31');
@@ -118,21 +123,17 @@ void main() {
     expect(c.read(gameProvider).feedback, isA<FeedbackError>());
     expect(c.read(gameProvider).errorTick, 1);
 
-    game.setCursor(1);
-    game.insert(Tok.plus); // 8+1 = 3?1
-    game.setCursor(5);
-    game.insert(Tok.plus); // 8+1 = 3+1
+    game.insertAt(1, Tok.plus); // 8+1 = 3?1
+    game.insertAt(5, Tok.plus); // 8+1 = 3+1
     await game.check();
     final notEqual = c.read(gameProvider).feedback as FeedbackNotEqual;
     expect((notEqual.left, notEqual.right), (9, 4));
 
-    game.backspace();
-    game.insert(Tok.pow); // 8+1 = 3**1  -> 9 ≠ 3
-    game.setCursor(0);
-    game.insert(Tok.sqrt);
-    game.insert(Tok.lparen);
-    game.setCursor(5);
-    game.insert(Tok.rparen);
+    game.removePiece(c.read(gameProvider).pieces[5].id);
+    game.insertAt(5, Tok.pow); // 8+1 = 3**1  -> 9 ≠ 3
+    game.insertAt(0, Tok.sqrt);
+    game.insertAt(1, Tok.lparen);
+    game.insertAt(5, Tok.rparen);
     expect(line(c.read(gameProvider)), 'r(8+1)=3^1');
     await game.check();
 
@@ -143,7 +144,7 @@ void main() {
     expect(repo.solved, {'8131': Level.easy});
 
     // Placa resolvida fica travada até pedir a próxima.
-    game.insert(Tok.plus);
+    game.insertAt(0, Tok.plus);
     expect(line(c.read(gameProvider)), 'r(8+1)=3^1');
     game.next();
     final after = c.read(gameProvider);
@@ -212,11 +213,9 @@ void main() {
     );
     final game = c.read(gameProvider.notifier);
     await game.ensureReady();
-    game.setCursor(1);
-    game.insert(Tok.plus);
+    game.insertAt(1, Tok.plus);
     final prefs = c.read(sharedPrefsProvider);
     final saved = jsonDecode(prefs.getString('game.demo')!) as Map;
     expect(saved['pieces'], '8+1=31');
-    expect(saved['cursor'], 2);
   });
 }

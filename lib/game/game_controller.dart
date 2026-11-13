@@ -41,7 +41,6 @@ class GameState {
     this.level = Level.easy,
     this.plate,
     this.pieces = const [],
-    this.cursor = 0,
     this.solved = false,
     this.exhausted = false,
     this.feedback,
@@ -57,8 +56,6 @@ class GameState {
   /// Linha da equação: dígitos, operadores e o sinal de igual.
   final List<Piece> pieces;
 
-  /// Posição de inserção, de 0 a `pieces.length`.
-  final int cursor;
 
   /// A placa atual já foi resolvida (aguardando "Próxima placa").
   final bool solved;
@@ -85,7 +82,6 @@ class GameState {
     Level? level,
     String? Function()? plate,
     List<Piece>? pieces,
-    int? cursor,
     bool? solved,
     bool? exhausted,
     GameFeedback? Function()? feedback,
@@ -96,7 +92,6 @@ class GameState {
         level: level ?? this.level,
         plate: plate != null ? plate() : this.plate,
         pieces: pieces ?? this.pieces,
-        cursor: cursor ?? this.cursor,
         solved: solved ?? this.solved,
         exhausted: exhausted ?? this.exhausted,
         feedback: feedback != null ? feedback() : this.feedback,
@@ -151,7 +146,6 @@ class GameController extends Notifier<GameState> {
         level: level,
         plate: plate,
         pieces: line,
-        cursor: ((map['cursor'] as num?)?.toInt() ?? 0).clamp(0, line.length),
         solved: valid && map['solved'] == true,
       );
     } catch (_) {
@@ -167,7 +161,6 @@ class GameController extends Notifier<GameState> {
             'level': s.level.name,
             'plate': s.plate,
             'pieces': _encode(s.pieces),
-            'cursor': s.cursor,
             'solved': s.solved,
           }),
         );
@@ -251,7 +244,6 @@ class GameController extends Notifier<GameState> {
       _update(state.copyWith(
         plate: () => null,
         pieces: const [],
-        cursor: 0,
         solved: false,
         exhausted: true,
         feedback: () => null,
@@ -261,7 +253,6 @@ class GameController extends Notifier<GameState> {
     _update(state.copyWith(
       plate: () => chosen,
       pieces: _initialPieces(chosen),
-      cursor: 1,
       solved: false,
       exhausted: false,
       feedback: () => null,
@@ -272,68 +263,38 @@ class GameController extends Notifier<GameState> {
 
   bool get _locked => state.solved || state.plate == null;
 
-  void insert(Tok tok) {
+  /// Solta um operador novo na posição [gap] da linha (0 a `pieces.length`).
+  void insertAt(int gap, Tok tok) {
     if (_locked || !state.level.allows(tok)) return;
     final pieces = [...state.pieces]
-      ..insert(state.cursor, OpPiece(_nextId++, tok));
-    _update(state.copyWith(
-      pieces: pieces,
-      cursor: state.cursor + 1,
-      feedback: () => null,
-    ));
+      ..insert(gap.clamp(0, state.pieces.length), OpPiece(_nextId++, tok));
+    _update(state.copyWith(pieces: pieces, feedback: () => null));
     ref.read(soundServiceProvider).play(SoundEffect.tap);
   }
 
-  /// Apaga o operador antes do cursor. Dígitos e o `=` não são apagados: o
-  /// cursor apenas passa por eles.
-  void backspace() {
-    if (_locked || state.cursor == 0) return;
-    final index = state.cursor - 1;
+  /// Move um operador ou o sinal de igual que já está na linha para a posição
+  /// [gap], contada na linha antes da remoção. Os dígitos nunca se movem.
+  void movePiece(int id, int gap) {
+    if (_locked) return;
+    final from = state.pieces.indexWhere((p) => p.id == id);
+    if (from < 0 || state.pieces[from] is DigitPiece) return;
+    var target = gap.clamp(0, state.pieces.length);
+    if (target > from) target--;
+    if (target == from) return;
     final pieces = [...state.pieces];
-    if (pieces[index] is OpPiece) pieces.removeAt(index);
-    _update(state.copyWith(
-      pieces: pieces,
-      cursor: index,
-      feedback: () => null,
-    ));
+    pieces.insert(target, pieces.removeAt(from));
+    _update(state.copyWith(pieces: pieces, feedback: () => null));
+    ref.read(soundServiceProvider).play(SoundEffect.tap);
   }
 
-  /// Remove um operador específico (toque longo / clique duplo na peça).
+  /// Tira um operador da linha (devolvendo-o ao teclado). Dígitos e o `=`
+  /// não podem ser removidos.
   void removePiece(int id) {
     if (_locked) return;
     final index = state.pieces.indexWhere((p) => p.id == id);
     if (index < 0 || state.pieces[index] is! OpPiece) return;
     final pieces = [...state.pieces]..removeAt(index);
-    _update(state.copyWith(
-      pieces: pieces,
-      cursor: state.cursor > index ? state.cursor - 1 : state.cursor,
-      feedback: () => null,
-    ));
-  }
-
-  void setCursor(int position) {
-    if (_locked) return;
-    _update(state.copyWith(cursor: position.clamp(0, state.pieces.length)));
-  }
-
-  void moveCursor(int delta) => setCursor(state.cursor + delta);
-
-  /// Traz o sinal de igual para a posição do cursor.
-  void moveEquals() {
-    if (_locked) return;
-    final pieces = [...state.pieces];
-    final from = pieces.indexWhere((p) => p is EqualsPiece);
-    if (from < 0) return;
-    final equals = pieces.removeAt(from);
-    var target = state.cursor;
-    if (target > from) target--;
-    pieces.insert(target, equals);
-    _update(state.copyWith(
-      pieces: pieces,
-      cursor: target + 1,
-      feedback: () => null,
-    ));
-    ref.read(soundServiceProvider).play(SoundEffect.tap);
+    _update(state.copyWith(pieces: pieces, feedback: () => null));
   }
 
   /// Devolve todos os operadores, mantendo a placa.
@@ -342,7 +303,6 @@ class GameController extends Notifier<GameState> {
     if (_locked || plate == null) return;
     _update(state.copyWith(
       pieces: _initialPieces(plate),
-      cursor: 1,
       feedback: () => null,
     ));
   }
@@ -428,7 +388,6 @@ class GameController extends Notifier<GameState> {
       _update(state.copyWith(
         level: level,
         pieces: pieces,
-        cursor: state.cursor.clamp(0, pieces.length),
         feedback: () => null,
       ));
     } else {

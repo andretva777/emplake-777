@@ -80,7 +80,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get editHint =>
-      'Tap the line to move the cursor, then pick an operator.';
+      'Drag an operator onto the row of digits to build the equation.';
 
   @override
   String get verify => 'Check';
@@ -95,16 +95,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clear => 'Clear';
 
   @override
-  String get backspace => 'Delete';
+  String get addToEnd => 'Add to the end of the equation';
 
   @override
-  String get moveLeft => 'Move cursor left';
+  String get moveLeft => 'Move left';
 
   @override
-  String get moveRight => 'Move cursor right';
+  String get moveRight => 'Move right';
 
   @override
-  String get moveEquals => 'Move the equals sign to the cursor';
+  String get removeOperator => 'Return to the keypad';
 
   @override
   String get soundOn => 'Sound on';
@@ -332,7 +332,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get helpHow =>
-      'Tap anywhere on the line to place the cursor, then tap an operator to insert it there. Use ⌫ to delete the operator before the cursor and the = button to bring the equals sign to the cursor.';
+      'Drag an operator from the keypad onto the row of digits and drop it between two pieces. Drag the = sign to move it. To take an operator out, drag it off the row or tap it: it flies back to the keypad.';
 
   @override
   String get helpScaleTitle => 'The scale';
@@ -363,7 +363,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get helpKeyboard =>
-      'On a computer you can also use the keyboard: + - * / ( ) ! ^ | =, the arrow keys, Backspace and Enter.';
+      'On a computer, the Enter key checks the equation (and moves on to the next plate after a correct answer).';
 
   @override
   String get opSqrt => 'square root';
