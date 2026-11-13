@@ -21,7 +21,7 @@ class Solution {
 class Solver {
   Solver(this.level);
 
-  final Level level;
+  final OperatorRules level;
 
   static const double _limit = 1e6;
 

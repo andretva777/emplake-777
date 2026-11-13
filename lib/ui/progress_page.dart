@@ -91,33 +91,49 @@ class _ProgressBody extends ConsumerWidget {
         final pad = PageFrame.gutter(constraints.maxWidth);
         final wide = constraints.maxWidth >= 840;
 
-        final stats = Row(
-          children: [
-            Expanded(
-              child: _StatCard(
-                icon: Icons.star_rounded,
-                label: l10n.scoreLabel,
-                value: progress.score,
+        final cards = [
+          _StatCard(
+            icon: Icons.star_rounded,
+            label: l10n.scoreLabel,
+            value: progress.score,
+          ),
+          _StatCard(
+            icon: Icons.check_circle_rounded,
+            label: l10n.solvedLabel,
+            value: progress.solved.length,
+          ),
+          _StatCard(
+            icon: Icons.skip_next_rounded,
+            label: l10n.skippedLabel,
+            value: progress.skipped,
+          ),
+          _StatCard(
+            icon: Icons.explore_rounded,
+            label: l10n.statAdventureBest,
+            value: progress.adventureBest,
+          ),
+        ];
+        Widget row(List<Widget> items) => IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final (i, card) in items.indexed) ...[
+                    if (i > 0) const SizedBox(width: 12),
+                    Expanded(child: card),
+                  ],
+                ],
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _StatCard(
-                icon: Icons.check_circle_rounded,
-                label: l10n.solvedLabel,
-                value: progress.solved.length,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _StatCard(
-                icon: Icons.skip_next_rounded,
-                label: l10n.skippedLabel,
-                value: progress.skipped,
-              ),
-            ),
-          ],
-        );
+            );
+        // Quatro números lado a lado só quando há espaço; senão, 2 x 2.
+        final stats = constraints.maxWidth - 2 * pad >= 560
+            ? row(cards)
+            : Column(
+                children: [
+                  row(cards.sublist(0, 2)),
+                  const SizedBox(height: 12),
+                  row(cards.sublist(2)),
+                ],
+              );
         final solved = _SolvedCard(solved: progress.solved);
         final ranking = _RankingCard(entries: data.ranking, currentUid: uid);
 

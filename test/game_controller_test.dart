@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:emplake/core/providers.dart';
 import 'package:emplake/data/progress_repository.dart';
 import 'package:emplake/game/game_controller.dart';
+import 'package:emplake/game/game_mode.dart';
 import 'package:emplake/game/solver.dart';
 import 'package:emplake/game/tokens.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -217,5 +218,61 @@ void main() {
     final prefs = c.read(sharedPrefsProvider);
     final saved = jsonDecode(prefs.getString('game.demo')!) as Map;
     expect(saved['pieces'], '8+1=31');
+  });
+
+  test('modo específico: escolher, validar e não repontuar', () async {
+    final (c, repo) = await setUpGame(
+      prefs: {'game.mode': 'specific'},
+      repo: FakeProgressRepository(solved: {'2222': Level.easy}),
+    );
+    final game = c.read(gameProvider.notifier);
+    await game.ensureReady();
+    // Nada é sorteado: o jogador escolhe.
+    expect(c.read(gameProvider).plate, isNull);
+
+    expect(game.choosePlate('12a4'), PlateChoice.invalid);
+    expect(game.choosePlate('123'), PlateChoice.invalid);
+    game.setLevel(Level.hard);
+    expect(game.choosePlate('8131'), PlateChoice.unsolvable);
+    expect(c.read(gameProvider).plate, isNull);
+
+    // Placa já resolvida: pode jogar, mas não ganha pontos de novo.
+    expect(game.wasSolved('2222'), isTrue);
+    expect(game.choosePlate('2222'), PlateChoice.ok);
+    final pieces = c.read(gameProvider).pieces;
+    game.insertAt(1, Tok.plus);
+    game.insertAt(5, Tok.times);
+    expect(line(c.read(gameProvider)), '2+2=2*2');
+    expect(pieces.length, 5);
+    await game.check();
+    final s = c.read(gameProvider);
+    expect(s.solved, isTrue);
+    expect((s.feedback as FeedbackCorrect).repeated, isTrue);
+    expect(s.score, 1);
+    expect(repo.solved, {'2222': Level.easy});
+
+    // Próxima: volta para a escolha.
+    game.next();
+    expect(c.read(gameProvider).plate, isNull);
+  });
+
+  test('cada modo guarda a sua partida', () async {
+    final (c, _) = await setUpGame(
+      prefs: {'game.demo': savedGame('8131', '81=31')},
+    );
+    final game = c.read(gameProvider.notifier);
+    await game.ensureReady();
+    expect(c.read(gameProvider).plate, '8131');
+
+    c.read(gameModeProvider.notifier).select(GameMode.specific);
+    await c.read(gameProvider.notifier).ensureReady();
+    expect(c.read(gameProvider).plate, isNull);
+    c.read(gameProvider.notifier).choosePlate('4444');
+
+    c.read(gameModeProvider.notifier).select(GameMode.random);
+    await c.read(gameProvider.notifier).ensureReady();
+    expect(c.read(gameProvider).plate, '8131');
+    c.read(gameModeProvider.notifier).select(GameMode.specific);
+    expect(c.read(gameProvider).plate, '4444');
   });
 }

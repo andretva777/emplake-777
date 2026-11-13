@@ -31,6 +31,8 @@ class _HelpDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             _HelpItem(Icons.flag_rounded, l10n.helpGoalTitle, l10n.helpGoal),
+            _HelpItem(Icons.sports_esports_rounded, l10n.helpModesTitle,
+                l10n.helpModes),
             _HelpItem(
                 Icons.touch_app_rounded, l10n.helpHowTitle, l10n.helpHow),
             _HelpItem(

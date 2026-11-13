@@ -385,4 +385,164 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get opCeil => 'teto';
+
+  @override
+  String get modeLabel => 'Modo de jogo';
+
+  @override
+  String get modeRandom => 'Aleatório';
+
+  @override
+  String get modeSpecific => 'Específico';
+
+  @override
+  String get modeAdventure => 'Aventura';
+
+  @override
+  String get correctRepeated =>
+      'Correto! Você já tinha resolvido esta placa, então ela não vale pontos.';
+
+  @override
+  String get specificTitle => 'Escolha a placa';
+
+  @override
+  String get specificPrompt =>
+      'Digite os 4 dígitos da placa que você quer resolver.';
+
+  @override
+  String get specificField => 'Dígitos da placa';
+
+  @override
+  String get specificPlay => 'Jogar';
+
+  @override
+  String get specificInvalid => 'Digite exatamente 4 dígitos.';
+
+  @override
+  String specificUnsolvable(String level) {
+    return 'Esta placa não tem solução no nível $level. Tente outro nível ou outra placa.';
+  }
+
+  @override
+  String get specificAlreadySolved =>
+      'Você já resolveu esta placa: pode jogar de novo, mas não ganha pontos.';
+
+  @override
+  String get changePlate => 'Trocar placa';
+
+  @override
+  String get moneyLabel => 'Moedas';
+
+  @override
+  String coinsAmount(int coins) {
+    return '$coins moedas';
+  }
+
+  @override
+  String get adventureSolvedLabel => 'Placas';
+
+  @override
+  String get adventurePotLabel => 'Prêmio';
+
+  @override
+  String get adventureIntroTitle => 'Modo aventura';
+
+  @override
+  String adventureIntro(int money, int penalty, int skip) {
+    return 'Você começa com $money moedas e só com + − × ÷ e parênteses. Cada acerto rende moedas, e quanto mais rápido, maior o prêmio. Verificar errado custa $penalty e pular custa $skip. Compre operadores avançados para facilitar. Se as moedas acabarem, a aventura termina.';
+  }
+
+  @override
+  String get adventureStart => 'Começar aventura';
+
+  @override
+  String adventureBest(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Recorde: $count placas',
+      one: 'Recorde: 1 placa',
+      zero: 'Recorde: nenhuma placa',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String adventureLocked(String name, int price) {
+    return '$name: bloqueado, custa $price moedas';
+  }
+
+  @override
+  String adventureBuyTitle(String symbol) {
+    return 'Comprar $symbol?';
+  }
+
+  @override
+  String adventureBuyBody(int price, int money) {
+    return 'Custa $price moedas e fica liberado até o fim desta aventura. Você tem $money.';
+  }
+
+  @override
+  String get adventureBuy => 'Comprar';
+
+  @override
+  String adventureCantAfford(int missing) {
+    return 'Moedas insuficientes: faltam $missing.';
+  }
+
+  @override
+  String rewardMessage(int coins) {
+    return 'Correto! +$coins moedas';
+  }
+
+  @override
+  String penaltyNote(int coins) {
+    return '−$coins moedas';
+  }
+
+  @override
+  String adventureSkip(int cost) {
+    return 'Pular (−$cost)';
+  }
+
+  @override
+  String get adventureGiveUp => 'Desistir';
+
+  @override
+  String get adventureGiveUpTitle => 'Desistir da aventura?';
+
+  @override
+  String get adventureGiveUpBody =>
+      'A aventura termina agora; as placas já resolvidas contam para o recorde.';
+
+  @override
+  String get adventureOverTitle => 'Fim da aventura';
+
+  @override
+  String adventureOverBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Você resolveu $count placas.',
+      one: 'Você resolveu 1 placa.',
+      zero: 'Nenhuma placa resolvida.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adventureNewRecord => 'Novo recorde!';
+
+  @override
+  String get adventureRestart => 'Nova aventura';
+
+  @override
+  String get statAdventureBest => 'Recorde na aventura';
+
+  @override
+  String get helpModesTitle => 'Modos';
+
+  @override
+  String get helpModes =>
+      'Aleatório: placas sorteadas entre as que você ainda não resolveu. Específico: você digita a placa que quer resolver. Aventura: comece com moedas e os operadores básicos, ganhe moedas acertando, perca errando ou pulando e compre operadores avançados; se as moedas acabarem, fim de jogo.';
 }

@@ -777,6 +777,240 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'teto'**
   String get opCeil;
+
+  /// No description provided for @modeLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Modo de jogo'**
+  String get modeLabel;
+
+  /// No description provided for @modeRandom.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aleatório'**
+  String get modeRandom;
+
+  /// No description provided for @modeSpecific.
+  ///
+  /// In pt, this message translates to:
+  /// **'Específico'**
+  String get modeSpecific;
+
+  /// No description provided for @modeAdventure.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aventura'**
+  String get modeAdventure;
+
+  /// No description provided for @correctRepeated.
+  ///
+  /// In pt, this message translates to:
+  /// **'Correto! Você já tinha resolvido esta placa, então ela não vale pontos.'**
+  String get correctRepeated;
+
+  /// No description provided for @specificTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Escolha a placa'**
+  String get specificTitle;
+
+  /// No description provided for @specificPrompt.
+  ///
+  /// In pt, this message translates to:
+  /// **'Digite os 4 dígitos da placa que você quer resolver.'**
+  String get specificPrompt;
+
+  /// No description provided for @specificField.
+  ///
+  /// In pt, this message translates to:
+  /// **'Dígitos da placa'**
+  String get specificField;
+
+  /// No description provided for @specificPlay.
+  ///
+  /// In pt, this message translates to:
+  /// **'Jogar'**
+  String get specificPlay;
+
+  /// No description provided for @specificInvalid.
+  ///
+  /// In pt, this message translates to:
+  /// **'Digite exatamente 4 dígitos.'**
+  String get specificInvalid;
+
+  /// No description provided for @specificUnsolvable.
+  ///
+  /// In pt, this message translates to:
+  /// **'Esta placa não tem solução no nível {level}. Tente outro nível ou outra placa.'**
+  String specificUnsolvable(String level);
+
+  /// No description provided for @specificAlreadySolved.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você já resolveu esta placa: pode jogar de novo, mas não ganha pontos.'**
+  String get specificAlreadySolved;
+
+  /// No description provided for @changePlate.
+  ///
+  /// In pt, this message translates to:
+  /// **'Trocar placa'**
+  String get changePlate;
+
+  /// No description provided for @moneyLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moedas'**
+  String get moneyLabel;
+
+  /// No description provided for @coinsAmount.
+  ///
+  /// In pt, this message translates to:
+  /// **'{coins} moedas'**
+  String coinsAmount(int coins);
+
+  /// No description provided for @adventureSolvedLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Placas'**
+  String get adventureSolvedLabel;
+
+  /// No description provided for @adventurePotLabel.
+  ///
+  /// In pt, this message translates to:
+  /// **'Prêmio'**
+  String get adventurePotLabel;
+
+  /// No description provided for @adventureIntroTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Modo aventura'**
+  String get adventureIntroTitle;
+
+  /// No description provided for @adventureIntro.
+  ///
+  /// In pt, this message translates to:
+  /// **'Você começa com {money} moedas e só com + − × ÷ e parênteses. Cada acerto rende moedas, e quanto mais rápido, maior o prêmio. Verificar errado custa {penalty} e pular custa {skip}. Compre operadores avançados para facilitar. Se as moedas acabarem, a aventura termina.'**
+  String adventureIntro(int money, int penalty, int skip);
+
+  /// No description provided for @adventureStart.
+  ///
+  /// In pt, this message translates to:
+  /// **'Começar aventura'**
+  String get adventureStart;
+
+  /// No description provided for @adventureBest.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =0{Recorde: nenhuma placa} =1{Recorde: 1 placa} other{Recorde: {count} placas}}'**
+  String adventureBest(int count);
+
+  /// No description provided for @adventureLocked.
+  ///
+  /// In pt, this message translates to:
+  /// **'{name}: bloqueado, custa {price} moedas'**
+  String adventureLocked(String name, int price);
+
+  /// No description provided for @adventureBuyTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comprar {symbol}?'**
+  String adventureBuyTitle(String symbol);
+
+  /// No description provided for @adventureBuyBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'Custa {price} moedas e fica liberado até o fim desta aventura. Você tem {money}.'**
+  String adventureBuyBody(int price, int money);
+
+  /// No description provided for @adventureBuy.
+  ///
+  /// In pt, this message translates to:
+  /// **'Comprar'**
+  String get adventureBuy;
+
+  /// No description provided for @adventureCantAfford.
+  ///
+  /// In pt, this message translates to:
+  /// **'Moedas insuficientes: faltam {missing}.'**
+  String adventureCantAfford(int missing);
+
+  /// No description provided for @rewardMessage.
+  ///
+  /// In pt, this message translates to:
+  /// **'Correto! +{coins} moedas'**
+  String rewardMessage(int coins);
+
+  /// No description provided for @penaltyNote.
+  ///
+  /// In pt, this message translates to:
+  /// **'−{coins} moedas'**
+  String penaltyNote(int coins);
+
+  /// No description provided for @adventureSkip.
+  ///
+  /// In pt, this message translates to:
+  /// **'Pular (−{cost})'**
+  String adventureSkip(int cost);
+
+  /// No description provided for @adventureGiveUp.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desistir'**
+  String get adventureGiveUp;
+
+  /// No description provided for @adventureGiveUpTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Desistir da aventura?'**
+  String get adventureGiveUpTitle;
+
+  /// No description provided for @adventureGiveUpBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'A aventura termina agora; as placas já resolvidas contam para o recorde.'**
+  String get adventureGiveUpBody;
+
+  /// No description provided for @adventureOverTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Fim da aventura'**
+  String get adventureOverTitle;
+
+  /// No description provided for @adventureOverBody.
+  ///
+  /// In pt, this message translates to:
+  /// **'{count, plural, =0{Nenhuma placa resolvida.} =1{Você resolveu 1 placa.} other{Você resolveu {count} placas.}}'**
+  String adventureOverBody(int count);
+
+  /// No description provided for @adventureNewRecord.
+  ///
+  /// In pt, this message translates to:
+  /// **'Novo recorde!'**
+  String get adventureNewRecord;
+
+  /// No description provided for @adventureRestart.
+  ///
+  /// In pt, this message translates to:
+  /// **'Nova aventura'**
+  String get adventureRestart;
+
+  /// No description provided for @statAdventureBest.
+  ///
+  /// In pt, this message translates to:
+  /// **'Recorde na aventura'**
+  String get statAdventureBest;
+
+  /// No description provided for @helpModesTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Modos'**
+  String get helpModesTitle;
+
+  /// No description provided for @helpModes.
+  ///
+  /// In pt, this message translates to:
+  /// **'Aleatório: placas sorteadas entre as que você ainda não resolveu. Específico: você digita a placa que quer resolver. Aventura: comece com moedas e os operadores básicos, ganhe moedas acertando, perca errando ou pulando e compre operadores avançados; se as moedas acabarem, fim de jogo.'**
+  String get helpModes;
 }
 
 class _AppLocalizationsDelegate

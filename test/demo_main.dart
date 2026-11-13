@@ -4,13 +4,16 @@
 //   flutter run -d chrome -t test/demo_main.dart
 //
 // Parâmetros opcionais na URL (antes do #): plate, pieces, level, check=1,
-// lang, theme=dark|light, scale, sound=1.
+// lang, theme=dark|light, scale, sound=1, mode=random|specific|adventure,
+// start=1 (começa uma aventura).
 import 'dart:convert';
 
 import 'package:emplake/app.dart';
 import 'package:emplake/core/providers.dart';
 import 'package:emplake/data/progress_repository.dart';
+import 'package:emplake/game/adventure_controller.dart';
 import 'package:emplake/game/game_controller.dart';
+import 'package:emplake/game/game_mode.dart';
 import 'package:emplake/game/tokens.dart';
 import 'package:emplake/routing/app_router.dart';
 import 'package:emplake/ui/help_dialog.dart';
@@ -37,6 +40,9 @@ Future<void> main() async {
         'solved': false,
       }),
     );
+  }
+  if (query['mode'] != null) {
+    await prefs.setString(GameModeController.prefsKey, query['mode']!);
   }
   if (query['lang'] != null) {
     await prefs.setString('settings.language', query['lang']!);
@@ -90,6 +96,11 @@ Future<void> main() async {
         .navigatorKey
         .currentContext;
     if (context != null && context.mounted) showHelpDialog(context);
+  }
+
+  if (query['start'] == '1') {
+    await Future<void>.delayed(const Duration(milliseconds: 1200));
+    container.read(adventureProvider.notifier).start();
   }
 
   if (query['check'] == '1') {

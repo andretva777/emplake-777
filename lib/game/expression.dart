@@ -418,7 +418,7 @@ List<Object> _sideItems(Iterable<Piece> pieces) => [
         if (p is DigitPiece) p.value else if (p is OpPiece) p.tok,
     ];
 
-SideResult _evaluateSide(List<Piece> pieces, Level level) {
+SideResult _evaluateSide(List<Piece> pieces, OperatorRules level) {
   for (final p in pieces) {
     if (p is OpPiece && !level.allows(p.tok)) {
       return SideResult(
@@ -440,7 +440,7 @@ SideResult _evaluateSide(List<Piece> pieces, Level level) {
 }
 
 /// Avalia a linha de peças (que deve conter exatamente um [EqualsPiece]).
-EquationResult evaluateEquation(List<Piece> pieces, Level level) {
+EquationResult evaluateEquation(List<Piece> pieces, OperatorRules level) {
   final eq = pieces.indexWhere((p) => p is EqualsPiece);
   final left = eq < 0 ? pieces : pieces.sublist(0, eq);
   final right = eq < 0 ? const <Piece>[] : pieces.sublist(eq + 1);

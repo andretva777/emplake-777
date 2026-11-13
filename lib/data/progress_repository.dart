@@ -10,10 +10,14 @@ class UserProgress {
     this.score = 0,
     this.skipped = 0,
     this.solved = const {},
+    this.adventureBest = 0,
   });
 
   final int score;
   final int skipped;
+
+  /// Maior número de placas resolvidas numa única aventura.
+  final int adventureBest;
 
   /// Placa resolvida ("0427") -> nível em que foi resolvida.
   final Map<String, Level> solved;
@@ -38,13 +42,16 @@ abstract class ProgressRepository {
   Future<UserProgress> fetchProgress();
   Future<void> markSolved(String plate, Level level);
   Future<void> markSkipped(String plate);
+
+  /// Grava o recorde da aventura (o chamador garante que é maior que o atual).
+  Future<void> saveAdventureBest(int best);
   Future<List<RankEntry>> fetchRanking({int limit = 10});
 }
 
 /// Implementação com Cloud Firestore.
 ///
 /// Estrutura: `users/{uid}` com os campos `name`, `score`, `skipped`,
-/// `solvedCount` e `solved` (mapa placa -> nível).
+/// `solvedCount`, `solved` (mapa placa -> nível) e `adventureBest`.
 class FirestoreProgressRepository implements ProgressRepository {
   FirestoreProgressRepository(this._db, this._user);
 
@@ -72,6 +79,7 @@ class FirestoreProgressRepository implements ProgressRepository {
     return UserProgress(
       score: (data['score'] as num?)?.toInt() ?? 0,
       skipped: (data['skipped'] as num?)?.toInt() ?? 0,
+      adventureBest: (data['adventureBest'] as num?)?.toInt() ?? 0,
       solved: {
         for (final e in rawSolved.entries)
           e.key.toString(): Level.fromName(e.value?.toString()),
@@ -92,6 +100,13 @@ class FirestoreProgressRepository implements ProgressRepository {
   Future<void> markSkipped(String plate) => _doc.set({
         'name': _publicName,
         'skipped': FieldValue.increment(1),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true)).timeout(_timeout);
+
+  @override
+  Future<void> saveAdventureBest(int best) => _doc.set({
+        'name': _publicName,
+        'adventureBest': best,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true)).timeout(_timeout);
 

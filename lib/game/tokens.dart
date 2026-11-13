@@ -33,7 +33,15 @@ enum Tok {
 }
 
 /// Níveis de jogo. Quanto menos operadores disponíveis, mais difícil.
-enum Level {
+/// Quais operadores valem numa partida e se a divisão pode dar resultado
+/// não inteiro. Os níveis seguem regras fixas; a aventura libera operadores
+/// aos poucos.
+abstract interface class OperatorRules {
+  bool allows(Tok t);
+  bool get allowsFractions;
+}
+
+enum Level implements OperatorRules {
   easy(1, [
     Tok.plus, Tok.minus, Tok.times, Tok.divide, Tok.lparen, Tok.rparen, //
     Tok.sqrt, Tok.cbrt, Tok.fact, Tok.pow, Tok.abs,
@@ -61,8 +69,10 @@ enum Level {
   final List<Tok> operators;
 
   /// Apenas o nível fácil aceita divisão com resultado não inteiro.
+  @override
   bool get allowsFractions => this == Level.easy;
 
+  @override
   bool allows(Tok t) => operators.contains(t);
 
   static Level fromName(String? name) =>

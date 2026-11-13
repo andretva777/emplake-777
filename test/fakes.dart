@@ -9,6 +9,7 @@ class FakeProgressRepository implements ProgressRepository {
     this.failWrites = false,
     this.delay = Duration.zero,
     this.others = const [],
+    this.adventureBest = 0,
   }) : solved = {...?solved};
 
   final Map<String, Level> solved;
@@ -16,13 +17,19 @@ class FakeProgressRepository implements ProgressRepository {
   bool failWrites;
   final Duration delay;
   final List<RankEntry> others;
+  int adventureBest;
 
   int get score => solved.values.fold(0, (sum, l) => sum + l.points);
 
   @override
   Future<UserProgress> fetchProgress() async {
     await Future<void>.delayed(delay);
-    return UserProgress(score: score, skipped: skipped, solved: {...solved});
+    return UserProgress(
+      score: score,
+      skipped: skipped,
+      solved: {...solved},
+      adventureBest: adventureBest,
+    );
   }
 
   @override
@@ -35,6 +42,12 @@ class FakeProgressRepository implements ProgressRepository {
   Future<void> markSkipped(String plate) async {
     if (failWrites) throw StateError('offline');
     skipped++;
+  }
+
+  @override
+  Future<void> saveAdventureBest(int best) async {
+    if (failWrites) throw StateError('offline');
+    adventureBest = best;
   }
 
   @override

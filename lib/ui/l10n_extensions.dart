@@ -1,15 +1,22 @@
 import '../game/expression.dart';
+import '../game/game_mode.dart';
 import '../game/tokens.dart';
 import '../l10n/app_localizations.dart';
 import '../settings/settings_controller.dart';
 
-/// Traduções de valores do domínio (níveis, erros, operadores, temas).
+/// Traduções de valores do domínio (modos, níveis, erros, operadores, temas).
 extension DomainL10n on AppLocalizations {
   String levelName(Level level) => switch (level) {
         Level.easy => levelEasy,
         Level.intermediate => levelIntermediate,
         Level.advanced => levelAdvanced,
         Level.hard => levelHard,
+      };
+
+  String modeName(GameMode mode) => switch (mode) {
+        GameMode.random => modeRandom,
+        GameMode.specific => modeSpecific,
+        GameMode.adventure => modeAdventure,
       };
 
   String exprError(ExprError error) => switch (error.kind) {

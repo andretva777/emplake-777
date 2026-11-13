@@ -3,6 +3,17 @@
 Jogo de matemática com placas de carro: use os quatro dígitos da placa, na
 ordem, para montar uma igualdade verdadeira. Feito em Flutter (web).
 
+Modos de jogo:
+
+- **Aleatório**: placas sorteadas entre as que o jogador ainda não resolveu,
+  em quatro níveis de operadores.
+- **Específico**: o jogador digita a placa (o app avisa se não houver solução
+  no nível escolhido; placa já resolvida não pontua de novo).
+- **Aventura**: sobrevivência com moedas. Começa com 2000 moedas e só
+  `+ − × ÷ ( )`; acertos rendem um prêmio que cai com o tempo, erros e pulos
+  custam moedas e os operadores avançados são comprados. Acaba quando as
+  moedas acabam; o recorde fica salvo na nuvem.
+
 ## Como rodar
 
 ```bash
@@ -16,6 +27,10 @@ demonstração (usuário e dados falsos):
 ```bash
 flutter run -d chrome -t test/demo_main.dart
 ```
+
+
+Na URL do modo demonstração dá para escolher o modo: `?mode=specific`,
+`?mode=adventure` ou `?mode=adventure&start=1`.
 
 Testes: `flutter test`.
 
@@ -54,7 +69,7 @@ preciso configurar redirecionamentos).
 
 | Pasta | Conteúdo |
 | --- | --- |
-| `lib/game` | Operadores e níveis, analisador/avaliador de expressões, conversão para LaTeX, solver e controlador do jogo (Riverpod) |
+| `lib/game` | Operadores e níveis, analisador/avaliador de expressões, conversão para LaTeX, solver e controladores dos modos (Riverpod) |
 | `lib/data` | Leitura e escrita do progresso no Firestore |
 | `lib/settings` | Configurações persistidas (tema, fonte, cor, idioma, som) |
 | `lib/routing` | Rotas com go_router e retomada da última página |

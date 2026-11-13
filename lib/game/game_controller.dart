@@ -8,6 +8,8 @@ import '../audio/sound_service.dart';
 import '../core/providers.dart';
 import '../data/progress_repository.dart';
 import 'expression.dart';
+import 'game_mode.dart';
+import 'line_editing.dart';
 import 'solver.dart';
 import 'tokens.dart';
 
@@ -17,23 +19,45 @@ sealed class GameFeedback {
 }
 
 class FeedbackError extends GameFeedback {
-  const FeedbackError(this.error);
+  const FeedbackError(this.error, {this.penalty = 0});
   final ExprError error;
+
+  /// Moedas perdidas pelo erro (modo aventura).
+  final int penalty;
 }
 
 class FeedbackNotEqual extends GameFeedback {
-  const FeedbackNotEqual(this.left, this.right);
+  const FeedbackNotEqual(this.left, this.right, {this.penalty = 0});
   final double left;
   final double right;
+
+  /// Moedas perdidas pelo erro (modo aventura).
+  final int penalty;
 }
 
 class FeedbackCorrect extends GameFeedback {
-  const FeedbackCorrect(this.points, {this.saveFailed = false});
+  const FeedbackCorrect(
+    this.points, {
+    this.saveFailed = false,
+    this.repeated = false,
+  });
   final int points;
+
+  /// Placa que o jogador já tinha resolvido (modo específico): não pontua.
+  final bool repeated;
 
   /// A resposta está certa, mas não foi possível gravar na nuvem.
   final bool saveFailed;
 }
+
+/// Acerto no modo aventura: rende moedas em vez de pontos.
+class FeedbackReward extends GameFeedback {
+  const FeedbackReward(this.coins);
+  final int coins;
+}
+
+/// Resultado da escolha de uma placa no modo específico.
+enum PlateChoice { ok, invalid, unsolvable }
 
 @immutable
 class GameState {
@@ -102,7 +126,7 @@ class GameState {
 
 /// Regras e estado do jogo. O estado é salvo em SharedPreferences (por
 /// usuário) para que a partida continue de onde parou ao reabrir o app.
-class GameController extends Notifier<GameState> {
+class GameController extends Notifier<GameState> implements LineEditor {
   final math.Random _random = math.Random();
   int _nextId = 0;
 
@@ -112,17 +136,32 @@ class GameController extends Notifier<GameState> {
   /// Placas puladas nesta sessão, para não repetir logo em seguida.
   final Set<String> _skippedPlates = {};
 
+  /// Usuário dono do cache acima e pontuação dele. O cache sobrevive à troca
+  /// de modo, para não buscar tudo na nuvem de novo.
+  String? _cacheUid;
+  int _score = 0;
+
+  /// Modo específico: o jogador escolhe a placa.
+  bool _specific = false;
+
+  /// Cada modo guarda a sua partida.
   String get _prefsKey =>
-      'game.${ref.read(currentUserProvider)?.uid ?? 'anon'}';
+      'game.${ref.read(currentUserProvider)?.uid ?? 'anon'}'
+      '${_specific ? '.specific' : ''}';
 
   @override
   GameState build() {
-    // Reconstrói (e recarrega) quando o usuário muda.
-    ref.watch(currentUserProvider.select((u) => u?.uid));
-    _solvedPlates = null;
-    _skippedPlates.clear();
+    // Reconstrói quando o usuário ou o modo mudam.
+    final uid = ref.watch(currentUserProvider.select((u) => u?.uid));
+    _specific = ref.watch(gameModeProvider) == GameMode.specific;
+    if (uid != _cacheUid) {
+      _cacheUid = uid;
+      _solvedPlates = null;
+      _skippedPlates.clear();
+      _score = 0;
+    }
     _nextId = 0;
-    return _restore() ?? const GameState();
+    return (_restore() ?? const GameState()).copyWith(score: _score);
   }
 
   // ------------------------------------------------------------- persistência
@@ -134,14 +173,10 @@ class GameController extends Notifier<GameState> {
       final map = jsonDecode(raw) as Map<String, dynamic>;
       final level = Level.fromName(map['level'] as String?);
       final plate = map['plate'] as String?;
-      if (plate == null || !RegExp(r'^\d{4}$').hasMatch(plate)) {
-        return GameState(level: level);
-      }
-      final pieces = _decode(map['pieces'] as String? ?? '', level);
-      final digits = pieces.whereType<DigitPiece>().map((d) => d.value).join();
-      final valid = digits == plate &&
-          pieces.whereType<EqualsPiece>().length == 1;
-      final line = valid ? pieces : _initialPieces(plate);
+      if (plate == null || !isPlate(plate)) return GameState(level: level);
+      final pieces = decodeLine(map['pieces'] as String? ?? '', level, _id);
+      final valid = lineMatchesPlate(pieces, plate);
+      final line = valid ? pieces : initialLine(plate, _id);
       return GameState(
         level: level,
         plate: plate,
@@ -160,44 +195,13 @@ class GameController extends Notifier<GameState> {
           jsonEncode({
             'level': s.level.name,
             'plate': s.plate,
-            'pieces': _encode(s.pieces),
+            'pieces': encodeLine(s.pieces),
             'solved': s.solved,
           }),
         );
   }
 
-  String _encode(List<Piece> pieces) => pieces
-      .map((p) => switch (p) {
-            DigitPiece(:final value) => '$value',
-            EqualsPiece() => '=',
-            OpPiece(:final tok) => tok.code,
-          })
-      .join();
-
-  List<Piece> _decode(String s, Level level) {
-    final out = <Piece>[];
-    for (final ch in s.split('')) {
-      final digit = int.tryParse(ch);
-      if (digit != null) {
-        out.add(DigitPiece(_nextId++, digit));
-      } else if (ch == '=') {
-        out.add(EqualsPiece(_nextId++));
-      } else {
-        final tok = Tok.fromCode(ch);
-        if (tok != null && level.allows(tok)) out.add(OpPiece(_nextId++, tok));
-      }
-    }
-    return out;
-  }
-
-  /// Linha inicial: os quatro dígitos com o `=` já no meio.
-  List<Piece> _initialPieces(String plate) => [
-        DigitPiece(_nextId++, int.parse(plate[0])),
-        DigitPiece(_nextId++, int.parse(plate[1])),
-        EqualsPiece(_nextId++),
-        DigitPiece(_nextId++, int.parse(plate[2])),
-        DigitPiece(_nextId++, int.parse(plate[3])),
-      ];
+  int _id() => _nextId++;
 
   void _update(GameState next) {
     state = next;
@@ -214,16 +218,16 @@ class GameController extends Notifier<GameState> {
       final progress =
           repo == null ? const UserProgress() : await repo.fetchProgress();
       _solvedPlates = {...progress.solved.keys};
-      state = state.copyWith(score: progress.score);
+      _score = progress.score;
     }
+    state = state.copyWith(score: _score);
+    // No modo específico a placa só existe quando o jogador a escolhe.
+    if (_specific) return;
     final plate = state.plate;
     final stale = plate == null ||
         (!state.solved && _solvedPlates!.contains(plate));
     if (stale) _drawPlate();
   }
-
-  static List<int> _digitsOf(String plate) =>
-      plate.split('').map(int.parse).toList();
 
   /// Sorteia uma placa que o usuário ainda não resolveu e que tenha solução
   /// no nível atual.
@@ -237,7 +241,7 @@ class GameController extends Notifier<GameState> {
       if (solved.contains(candidate)) continue;
       // Depois de muitas tentativas, placas puladas voltam a valer.
       if (attempt < 200 && _skippedPlates.contains(candidate)) continue;
-      if (!solver.isSolvable(_digitsOf(candidate))) continue;
+      if (!solver.isSolvable(digitsOf(candidate))) continue;
       chosen = candidate;
     }
     if (chosen == null) {
@@ -252,7 +256,7 @@ class GameController extends Notifier<GameState> {
     }
     _update(state.copyWith(
       plate: () => chosen,
-      pieces: _initialPieces(chosen),
+      pieces: initialLine(chosen, _id),
       solved: false,
       exhausted: false,
       feedback: () => null,
@@ -264,36 +268,32 @@ class GameController extends Notifier<GameState> {
   bool get _locked => state.solved || state.plate == null;
 
   /// Solta um operador novo na posição [gap] da linha (0 a `pieces.length`).
+  @override
   void insertAt(int gap, Tok tok) {
     if (_locked || !state.level.allows(tok)) return;
-    final pieces = [...state.pieces]
-      ..insert(gap.clamp(0, state.pieces.length), OpPiece(_nextId++, tok));
+    final pieces = insertInLine(state.pieces, gap, OpPiece(_id(), tok));
     _update(state.copyWith(pieces: pieces, feedback: () => null));
     ref.read(soundServiceProvider).play(SoundEffect.tap);
   }
 
   /// Move um operador ou o sinal de igual que já está na linha para a posição
   /// [gap], contada na linha antes da remoção. Os dígitos nunca se movem.
+  @override
   void movePiece(int id, int gap) {
     if (_locked) return;
-    final from = state.pieces.indexWhere((p) => p.id == id);
-    if (from < 0 || state.pieces[from] is DigitPiece) return;
-    var target = gap.clamp(0, state.pieces.length);
-    if (target > from) target--;
-    if (target == from) return;
-    final pieces = [...state.pieces];
-    pieces.insert(target, pieces.removeAt(from));
+    final pieces = moveInLine(state.pieces, id, gap);
+    if (pieces == null) return;
     _update(state.copyWith(pieces: pieces, feedback: () => null));
     ref.read(soundServiceProvider).play(SoundEffect.tap);
   }
 
   /// Tira um operador da linha (devolvendo-o ao teclado). Dígitos e o `=`
   /// não podem ser removidos.
+  @override
   void removePiece(int id) {
     if (_locked) return;
-    final index = state.pieces.indexWhere((p) => p.id == id);
-    if (index < 0 || state.pieces[index] is! OpPiece) return;
-    final pieces = [...state.pieces]..removeAt(index);
+    final pieces = removeFromLine(state.pieces, id);
+    if (pieces == null) return;
     _update(state.copyWith(pieces: pieces, feedback: () => null));
   }
 
@@ -302,7 +302,7 @@ class GameController extends Notifier<GameState> {
     final plate = state.plate;
     if (_locked || plate == null) return;
     _update(state.copyWith(
-      pieces: _initialPieces(plate),
+      pieces: initialLine(plate, _id),
       feedback: () => null,
     ));
   }
@@ -335,10 +335,19 @@ class GameController extends Notifier<GameState> {
 
     final level = state.level;
     sounds.play(SoundEffect.success);
+    if (wasSolved(plate)) {
+      // Só acontece no modo específico: acertar de novo não pontua.
+      _update(state.copyWith(
+        solved: true,
+        feedback: () => const FeedbackCorrect(0, repeated: true),
+      ));
+      return;
+    }
     _solvedPlates?.add(plate);
+    _score += level.points;
     _update(state.copyWith(
       solved: true,
-      score: state.score + level.points,
+      score: _score,
       feedback: () => FeedbackCorrect(level.points),
     ));
     try {
@@ -357,7 +366,7 @@ class GameController extends Notifier<GameState> {
   Solution? currentSolution() {
     final plate = state.plate;
     if (plate == null) return null;
-    return Solver(state.level).solve(_digitsOf(plate));
+    return Solver(state.level).solve(digitsOf(plate));
   }
 
   /// Pula a placa atual e sorteia outra.
@@ -371,14 +380,44 @@ class GameController extends Notifier<GameState> {
   }
 
   /// Avança para a próxima placa depois de resolver a atual.
-  void next() => _drawPlate();
+  void next() => _specific ? changePlate() : _drawPlate();
+
+  /// O jogador já resolveu esta placa antes.
+  bool wasSolved(String plate) => _solvedPlates?.contains(plate) ?? false;
+
+  /// Modo específico: começa a jogar com a placa digitada.
+  PlateChoice choosePlate(String plate) {
+    if (!isPlate(plate)) return PlateChoice.invalid;
+    if (!Solver(state.level).isSolvable(digitsOf(plate))) {
+      return PlateChoice.unsolvable;
+    }
+    _update(state.copyWith(
+      plate: () => plate,
+      pieces: initialLine(plate, _id),
+      solved: false,
+      exhausted: false,
+      feedback: () => null,
+    ));
+    return PlateChoice.ok;
+  }
+
+  /// Modo específico: volta para a escolha de placa.
+  void changePlate() {
+    _update(state.copyWith(
+      plate: () => null,
+      pieces: const [],
+      solved: false,
+      exhausted: false,
+      feedback: () => null,
+    ));
+  }
 
   void setLevel(Level level) {
     if (level == state.level) return;
     final plate = state.plate;
     final keep = plate != null &&
         !state.solved &&
-        Solver(level).isSolvable(_digitsOf(plate));
+        Solver(level).isSolvable(digitsOf(plate));
     if (keep) {
       // A placa continua valendo; só saem os operadores não permitidos.
       final pieces = [
@@ -390,6 +429,10 @@ class GameController extends Notifier<GameState> {
         pieces: pieces,
         feedback: () => null,
       ));
+    } else if (_specific) {
+      // A placa escolhida não vale no novo nível: volta para a escolha.
+      state = state.copyWith(level: level);
+      changePlate();
     } else {
       state = state.copyWith(level: level);
       _drawPlate();

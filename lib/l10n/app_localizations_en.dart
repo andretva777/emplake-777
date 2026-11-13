@@ -385,4 +385,164 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get opCeil => 'ceiling';
+
+  @override
+  String get modeLabel => 'Game mode';
+
+  @override
+  String get modeRandom => 'Random';
+
+  @override
+  String get modeSpecific => 'Specific';
+
+  @override
+  String get modeAdventure => 'Adventure';
+
+  @override
+  String get correctRepeated =>
+      'Correct! You had already solved this plate, so it is worth no points.';
+
+  @override
+  String get specificTitle => 'Choose a plate';
+
+  @override
+  String get specificPrompt =>
+      'Type the 4 digits of the plate you want to solve.';
+
+  @override
+  String get specificField => 'Plate digits';
+
+  @override
+  String get specificPlay => 'Play';
+
+  @override
+  String get specificInvalid => 'Type exactly 4 digits.';
+
+  @override
+  String specificUnsolvable(String level) {
+    return 'This plate has no solution at the $level level. Try another level or another plate.';
+  }
+
+  @override
+  String get specificAlreadySolved =>
+      'You have already solved this plate: you can play it again, but it is worth no points.';
+
+  @override
+  String get changePlate => 'Change plate';
+
+  @override
+  String get moneyLabel => 'Coins';
+
+  @override
+  String coinsAmount(int coins) {
+    return '$coins coins';
+  }
+
+  @override
+  String get adventureSolvedLabel => 'Plates';
+
+  @override
+  String get adventurePotLabel => 'Prize';
+
+  @override
+  String get adventureIntroTitle => 'Adventure mode';
+
+  @override
+  String adventureIntro(int money, int penalty, int skip) {
+    return 'You start with $money coins and only + − × ÷ and parentheses. Every correct answer earns coins, and the faster you are, the bigger the prize. A wrong check costs $penalty and skipping costs $skip. Buy advanced operators to make it easier. If you run out of coins, the adventure is over.';
+  }
+
+  @override
+  String get adventureStart => 'Start adventure';
+
+  @override
+  String adventureBest(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Best: $count plates',
+      one: 'Best: 1 plate',
+      zero: 'Best: no plates',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String adventureLocked(String name, int price) {
+    return '$name: locked, costs $price coins';
+  }
+
+  @override
+  String adventureBuyTitle(String symbol) {
+    return 'Buy $symbol?';
+  }
+
+  @override
+  String adventureBuyBody(int price, int money) {
+    return 'It costs $price coins and stays unlocked until the end of this adventure. You have $money.';
+  }
+
+  @override
+  String get adventureBuy => 'Buy';
+
+  @override
+  String adventureCantAfford(int missing) {
+    return 'Not enough coins: $missing short.';
+  }
+
+  @override
+  String rewardMessage(int coins) {
+    return 'Correct! +$coins coins';
+  }
+
+  @override
+  String penaltyNote(int coins) {
+    return '−$coins coins';
+  }
+
+  @override
+  String adventureSkip(int cost) {
+    return 'Skip (−$cost)';
+  }
+
+  @override
+  String get adventureGiveUp => 'Give up';
+
+  @override
+  String get adventureGiveUpTitle => 'Give up the adventure?';
+
+  @override
+  String get adventureGiveUpBody =>
+      'The adventure ends now; the plates you solved count toward your best.';
+
+  @override
+  String get adventureOverTitle => 'Adventure over';
+
+  @override
+  String adventureOverBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'You solved $count plates.',
+      one: 'You solved 1 plate.',
+      zero: 'No plates solved.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get adventureNewRecord => 'New best!';
+
+  @override
+  String get adventureRestart => 'New adventure';
+
+  @override
+  String get statAdventureBest => 'Adventure best';
+
+  @override
+  String get helpModesTitle => 'Modes';
+
+  @override
+  String get helpModes =>
+      'Random: plates drawn among the ones you have not solved yet. Specific: you type the plate you want to solve. Adventure: start with coins and the basic operators, earn coins by solving, lose them by making mistakes or skipping, and buy advanced operators; if you run out of coins, it is game over.';
 }
