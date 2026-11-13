@@ -202,6 +202,7 @@ class _ClassicBoardState extends ConsumerState<_ClassicBoard>
             const SizedBox(height: 12),
             EquationCard(
               pieces: state.pieces,
+              keys: boardKeys,
               latex: state.latex,
               locked: !enabled,
               solved: state.solved,
@@ -223,6 +224,7 @@ class _ClassicBoardState extends ConsumerState<_ClassicBoard>
           mainAxisSize: MainAxisSize.min,
           children: [
             OperatorTray(
+              keys: boardKeys,
               operators: state.level.operators,
               enabled: enabled,
               canClear: state.hasOperators,

@@ -5,6 +5,7 @@ import '../../game/tokens.dart';
 import '../../l10n/app_localizations.dart';
 import '../../settings/app_theme.dart';
 import '../l10n_extensions.dart';
+import 'board_keys.dart';
 import 'drag_payload.dart';
 
 /// Teclado de operadores. Cada tecla é arrastada até a linha da equação; o
@@ -14,6 +15,7 @@ class OperatorTray extends StatelessWidget {
   const OperatorTray({
     super.key,
     required this.operators,
+    required this.keys,
     required this.enabled,
     required this.canClear,
     required this.onAddToEnd,
@@ -23,6 +25,9 @@ class OperatorTray extends StatelessWidget {
   });
 
   final List<Tok> operators;
+
+  /// Chaves das teclas (destino da animação de retorno).
+  final BoardKeys keys;
 
   /// Operadores bloqueados e o preço de cada um.
   final Map<Tok, int> locked;
@@ -35,8 +40,8 @@ class OperatorTray extends StatelessWidget {
   final ValueChanged<Tok> onAddToEnd;
   final VoidCallback onClear;
 
-  /// Chave global da tecla de um operador (destino da animação de retorno).
-  static GlobalKey keyFor(Tok tok) => GlobalObjectKey(tok);
+  /// Chave local da tecla de um operador (para localizá-la nos testes).
+  static Key valueKeyFor(Tok tok) => ValueKey('op-${tok.name}');
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +70,8 @@ class OperatorTray extends StatelessWidget {
             for (final tok in operators)
               if (locked[tok] case final price?)
                 _LockedKey(
-                  key: keyFor(tok),
+                  key: valueKeyFor(tok),
+                  globalKey: keys.operator(tok),
                   tok: tok,
                   price: price,
                   label: l10n.adventureLocked(
@@ -78,7 +84,8 @@ class OperatorTray extends StatelessWidget {
                 )
               else
                 _OperatorKey(
-                  key: keyFor(tok),
+                  key: valueKeyFor(tok),
+                  globalKey: keys.operator(tok),
                   tok: tok,
                   name: l10n.operatorName(tok) ?? tok.symbol,
                   addToEndLabel: l10n.addToEnd,
@@ -103,6 +110,7 @@ class OperatorTray extends StatelessWidget {
 class _OperatorKey extends StatelessWidget {
   const _OperatorKey({
     super.key,
+    required this.globalKey,
     required this.tok,
     required this.name,
     required this.addToEndLabel,
@@ -110,6 +118,7 @@ class _OperatorKey extends StatelessWidget {
     required this.onAddToEnd,
   });
 
+  final GlobalKey globalKey;
   final Tok tok;
   final String name;
   final String addToEndLabel;
@@ -166,6 +175,7 @@ class _OperatorKey extends StatelessWidget {
         : face(opacity: 0.4);
 
     return Tooltip(
+      key: globalKey,
       message: name,
       child: Semantics(
         label: name,
@@ -184,12 +194,14 @@ class _OperatorKey extends StatelessWidget {
 class _LockedKey extends StatelessWidget {
   const _LockedKey({
     super.key,
+    required this.globalKey,
     required this.tok,
     required this.price,
     required this.label,
     required this.onTap,
   });
 
+  final GlobalKey globalKey;
   final Tok tok;
   final int price;
   final String label;
@@ -200,6 +212,7 @@ class _LockedKey extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     return Tooltip(
+      key: globalKey,
       message: label,
       child: Semantics(
         button: true,

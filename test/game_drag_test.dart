@@ -20,7 +20,7 @@ void main() {
   testWidgets('arrastar um operador do teclado para a linha o insere',
       (tester) async {
     final c = await pumpGame(tester);
-    final key = find.byKey(OperatorTray.keyFor(Tok.sqrt));
+    final key = find.byKey(OperatorTray.valueKeyFor(Tok.sqrt));
     expect(key, findsOneWidget);
 
     // Metade esquerda do dígito 8: entra antes dele.
@@ -32,7 +32,7 @@ void main() {
   testWidgets('soltar no lado direito de uma peça insere depois dela',
       (tester) async {
     final c = await pumpGame(tester);
-    final key = find.byKey(OperatorTray.keyFor(Tok.plus));
+    final key = find.byKey(OperatorTray.valueKeyFor(Tok.plus));
     final eight = tester.getCenter(find.text('8'));
     await drag(tester, tester.getCenter(key), eight + const Offset(14, 0));
     expect(line(c.read(gameProvider)), '8+1=31');
@@ -40,7 +40,7 @@ void main() {
 
   testWidgets('soltar fora da linha não insere nada', (tester) async {
     final c = await pumpGame(tester);
-    final key = find.byKey(OperatorTray.keyFor(Tok.plus));
+    final key = find.byKey(OperatorTray.valueKeyFor(Tok.plus));
     await drag(tester, tester.getCenter(key), const Offset(20, 1300));
     expect(line(c.read(gameProvider)), '81=31');
     expect(tester.takeException(), isNull);
@@ -58,7 +58,7 @@ void main() {
       (tester) async {
     final c = await pumpGame(tester, pieces: '8+1=31');
     final op = find.byKey(
-      EquationLine.keyFor(c.read(gameProvider).pieces[1]),
+      EquationLine.valueKeyFor(c.read(gameProvider).pieces[1]),
     );
     expect(op, findsOneWidget);
     await drag(tester, tester.getCenter(op), const Offset(20, 1300));
@@ -69,7 +69,7 @@ void main() {
       (tester) async {
     final c = await pumpGame(tester, pieces: '8+1=31');
     final op = find.byKey(
-      EquationLine.keyFor(c.read(gameProvider).pieces[1]),
+      EquationLine.valueKeyFor(c.read(gameProvider).pieces[1]),
     );
     final three = tester.getCenter(find.text('3'));
     await drag(tester, tester.getCenter(op), three + const Offset(14, 0));
@@ -80,7 +80,7 @@ void main() {
       (tester) async {
     final c = await pumpGame(tester, pieces: '8+1=31');
     final op = find.byKey(
-      EquationLine.keyFor(c.read(gameProvider).pieces[1]),
+      EquationLine.valueKeyFor(c.read(gameProvider).pieces[1]),
     );
     await tester.tap(op);
     await tester.pump(const Duration(seconds: 1));
@@ -89,7 +89,7 @@ void main() {
 
   testWidgets('arrastar com o mouse também funciona', (tester) async {
     final c = await pumpGame(tester);
-    final key = find.byKey(OperatorTray.keyFor(Tok.plus));
+    final key = find.byKey(OperatorTray.valueKeyFor(Tok.plus));
     final eight = tester.getCenter(find.text('8'));
     await drag(
       tester,

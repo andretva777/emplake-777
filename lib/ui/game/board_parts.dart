@@ -17,10 +17,10 @@ import '../l10n_extensions.dart';
 import '../widgets/license_plate.dart';
 import '../widgets/page_frame.dart';
 import 'balance_scale.dart';
+import 'board_keys.dart';
 import 'drag_payload.dart';
 import 'equation_line.dart';
 import 'fly_back.dart';
-import 'operator_tray.dart';
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -162,6 +162,7 @@ class EquationCard extends StatelessWidget {
   const EquationCard({
     super.key,
     required this.pieces,
+    required this.keys,
     required this.latex,
     required this.locked,
     required this.solved,
@@ -173,6 +174,7 @@ class EquationCard extends StatelessWidget {
   });
 
   final List<Piece> pieces;
+  final BoardKeys keys;
   final String latex;
   final bool locked;
   final bool solved;
@@ -194,6 +196,7 @@ class EquationCard extends StatelessWidget {
             children: [
               EquationLine(
                 pieces: pieces,
+                keys: keys,
                 locked: locked,
                 solved: solved,
                 unit: unit,
@@ -295,13 +298,14 @@ abstract final class OperatorFlights {
   /// placa, enquanto as peças ainda estão na tela).
   static void allHome(
     BuildContext context,
+    BoardKeys keys,
     SoundService sounds,
     Iterable<Piece> pieces,
   ) {
     final flights = <Flight>[];
     for (final piece in pieces.whereType<OpPiece>()) {
-      final from = globalRectOf(EquationLine.keyFor(piece));
-      final to = globalRectOf(OperatorTray.keyFor(piece.tok));
+      final from = globalRectOf(keys.piece(piece));
+      final to = globalRectOf(keys.operator(piece.tok));
       if (from == null || to == null) continue;
       flights.add(Flight(from: from, to: to, label: piece.tok.symbol));
     }
@@ -313,11 +317,12 @@ abstract final class OperatorFlights {
   /// Um operador solto fora da linha volta do ponto onde foi largado.
   static void fromPointer(
     BuildContext context,
+    BoardKeys keys,
     SoundService sounds,
     Tok tok,
     Offset pointer,
   ) {
-    final to = globalRectOf(OperatorTray.keyFor(tok));
+    final to = globalRectOf(keys.operator(tok));
     if (to == null) return;
     playFlyBack(context, [
       Flight(
@@ -717,6 +722,9 @@ class SkippedDialog extends StatelessWidget {
 
 /// Tratadores de arrasto e devolução de operadores, iguais em todos os modos.
 mixin BoardInteractions<W extends ConsumerStatefulWidget> on ConsumerState<W> {
+  /// Chaves das teclas e peças deste tabuleiro.
+  final BoardKeys boardKeys = BoardKeys();
+
   /// Controlador do modo atual.
   LineEditor get editor;
 
@@ -727,7 +735,8 @@ mixin BoardInteractions<W extends ConsumerStatefulWidget> on ConsumerState<W> {
 
   /// Todos os operadores voltam para o teclado. Deve ser chamado antes de o
   /// estado mudar, enquanto as peças ainda estão na tela.
-  void flyAllHome() => OperatorFlights.allHome(context, _sounds, currentPieces);
+  void flyAllHome() =>
+      OperatorFlights.allHome(context, boardKeys, _sounds, currentPieces);
 
   /// Uma peça foi solta na linha: operador novo do teclado ou peça movida.
   void dropPiece(DragPayload payload, int gap) {
@@ -745,7 +754,7 @@ mixin BoardInteractions<W extends ConsumerStatefulWidget> on ConsumerState<W> {
   void dropOutside(DragPayload payload, Offset pointer) {
     final tok = payload.tok;
     if (tok == null) return;
-    OperatorFlights.fromPointer(context, _sounds, tok, pointer);
+    OperatorFlights.fromPointer(context, boardKeys, _sounds, tok, pointer);
     final id = payload.pieceId;
     if (id != null) editor.removePiece(id);
   }
@@ -754,7 +763,7 @@ mixin BoardInteractions<W extends ConsumerStatefulWidget> on ConsumerState<W> {
   void tapRemove(int id) {
     final piece = currentPieces.where((p) => p.id == id).firstOrNull;
     if (piece is! OpPiece) return;
-    OperatorFlights.allHome(context, _sounds, [piece]);
+    OperatorFlights.allHome(context, boardKeys, _sounds, [piece]);
     editor.removePiece(id);
   }
 }

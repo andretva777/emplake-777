@@ -364,6 +364,7 @@ class _AdventureBoardState extends ConsumerState<_AdventureBoard>
             const SizedBox(height: 12),
             EquationCard(
               pieces: state.pieces,
+              keys: boardKeys,
               latex: state.latex,
               locked: !enabled,
               solved: state.solved,
@@ -385,6 +386,7 @@ class _AdventureBoardState extends ConsumerState<_AdventureBoard>
           mainAxisSize: MainAxisSize.min,
           children: [
             OperatorTray(
+              keys: boardKeys,
               operators: AdventureRules.all,
               locked: {
                 for (final tok in AdventureRules.all)

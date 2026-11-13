@@ -5,6 +5,7 @@ import '../../game/tokens.dart';
 import '../../l10n/app_localizations.dart';
 import '../../settings/app_theme.dart';
 import '../l10n_extensions.dart';
+import 'board_keys.dart';
 import 'drag_payload.dart';
 
 /// Linha em que a equação é montada: os quatro dígitos fixos, o sinal de
@@ -17,6 +18,7 @@ class EquationLine extends StatefulWidget {
   const EquationLine({
     super.key,
     required this.pieces,
+    required this.keys,
     required this.locked,
     required this.solved,
     required this.unit,
@@ -26,6 +28,9 @@ class EquationLine extends StatefulWidget {
   });
 
   final List<Piece> pieces;
+
+  /// Chaves das peças (origem da animação de retorno).
+  final BoardKeys keys;
 
   /// Sem edição (placa resolvida).
   final bool locked;
@@ -43,9 +48,8 @@ class EquationLine extends StatefulWidget {
   /// Toque em um operador da linha.
   final ValueChanged<int> onRemove;
 
-  /// Chave global da peça, usada para localizar o operador na tela quando ele
-  /// "voa" de volta para o teclado.
-  static GlobalKey keyFor(Piece piece) => GlobalObjectKey(piece);
+  /// Chave local da peça na linha (para localizá-la nos testes).
+  static Key valueKeyFor(Piece piece) => ValueKey(('piece', piece.id));
 
   @override
   State<EquationLine> createState() => _EquationLineState();
@@ -99,8 +103,9 @@ class _EquationLineState extends State<EquationLine> {
       children: [
         for (final (i, piece) in pieces.indexed)
           _Slot(
-            key: ValueKey(piece.id),
+            key: EquationLine.valueKeyFor(piece),
             piece: piece,
+            keys: widget.keys,
             index: i,
             unit: widget.unit,
             solved: widget.solved,
@@ -139,6 +144,7 @@ class _Slot extends StatelessWidget {
   const _Slot({
     super.key,
     required this.piece,
+    required this.keys,
     required this.index,
     required this.unit,
     required this.solved,
@@ -158,6 +164,7 @@ class _Slot extends StatelessWidget {
   });
 
   final Piece piece;
+  final BoardKeys keys;
   final int index;
   final double unit;
   final bool solved;
@@ -191,7 +198,12 @@ class _Slot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tile = _Tile(piece: piece, unit: unit, solved: solved);
+    final tile = _Tile(
+      piece: piece,
+      unit: unit,
+      solved: solved,
+      globalKey: keys.piece(piece),
+    );
 
     Widget content = Row(
       mainAxisSize: MainAxisSize.min,
@@ -261,7 +273,6 @@ class _Slot extends StatelessWidget {
               piece: piece,
               unit: unit,
               solved: solved,
-              keyed: false,
               pop: false,
             ),
           ),
@@ -282,7 +293,7 @@ class _Tile extends StatelessWidget {
     required this.piece,
     required this.unit,
     required this.solved,
-    this.keyed = true,
+    this.globalKey,
     this.pop = true,
   });
 
@@ -290,8 +301,8 @@ class _Tile extends StatelessWidget {
   final double unit;
   final bool solved;
 
-  /// Usa a chave global da peça (só uma instância por vez pode usá-la).
-  final bool keyed;
+  /// Chave global da peça (só uma instância por vez pode usá-la).
+  final GlobalKey? globalKey;
 
   /// Anima a entrada do operador.
   final bool pop;
@@ -365,7 +376,7 @@ class _Tile extends StatelessWidget {
 
     // Operadores entram com um pequeno "pop".
     return TweenAnimationBuilder<double>(
-      key: keyed ? EquationLine.keyFor(piece) : null,
+      key: globalKey,
       tween: Tween(begin: 0.3, end: 1),
       duration: MediaQuery.disableAnimationsOf(context)
           ? Duration.zero

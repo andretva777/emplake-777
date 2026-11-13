@@ -93,7 +93,7 @@ void main() {
     expect(find.text('2000'), findsOneWidget);
 
     // A raiz começa bloqueada; tocar nela abre a compra.
-    await tester.tap(find.byKey(OperatorTray.keyFor(Tok.sqrt)));
+    await tester.tap(find.byKey(OperatorTray.valueKeyFor(Tok.sqrt)));
     await settle(tester);
     expect(find.text('Comprar √?'), findsOneWidget);
     await tester.tap(find.text('Comprar'));
@@ -127,5 +127,32 @@ void main() {
     final paused = c.read(adventureProvider).elapsed;
     await tester.pump(const Duration(seconds: 3));
     expect(c.read(adventureProvider).elapsed, paused);
+  });
+
+  testWidgets('trocar de modo com um tabuleiro na tela não quebra',
+      (tester) async {
+    final c = await pumpApp(
+      tester,
+      prefs: {'game.demo': savedClassic('8131', '81=31')},
+    );
+    // Aventura em andamento -> aleatório -> aventura: durante a transição,
+    // os dois tabuleiros (cada um com o seu teclado) ficam na tela.
+    await tester.tap(find.text('Aventura'));
+    await settle(tester);
+    await tester.tap(find.text('Começar aventura'));
+    await settle(tester);
+    expect(c.read(adventureProvider).phase, AdventurePhase.playing);
+
+    await tester.tap(find.text('Aleatório'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await settle(tester);
+    expect(c.read(gameModeProvider), GameMode.random);
+
+    await tester.tap(find.text('Aventura'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await settle(tester);
+    expect(tester.takeException(), isNull);
   });
 }
