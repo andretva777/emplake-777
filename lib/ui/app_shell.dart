@@ -47,7 +47,6 @@ class AppShell extends StatelessWidget {
             child: CurvedNavigationBar(
               index: current,
               height: 64,
-              maxWidth: 640,
               color: scheme.primaryContainer,
               buttonBackgroundColor: scheme.primary,
               backgroundColor: scheme.surface,

@@ -63,10 +63,18 @@ class LicensePlate extends StatelessWidget {
               ),
               Expanded(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: height * 0.32),
+                  // O espaçamento entre letras também é aplicado depois da
+                  // última; o recuo extra à esquerda mantém o texto centrado.
+                  padding: EdgeInsets.only(
+                    left: height * 0.44,
+                    right: height * 0.32,
+                  ),
                   child: Center(
                     child: Text(
                       text,
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.visible,
                       textScaler: TextScaler.noScaling,
                       style: mathStyle(
                         context,

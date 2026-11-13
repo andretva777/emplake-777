@@ -391,18 +391,20 @@ class _GameBoardState extends ConsumerState<_GameBoard> {
         Row(
           children: [
             Expanded(
+              flex: 4,
               child: OutlinedButton.icon(
                 onPressed: enabled ? _skip : null,
                 icon: const Icon(Icons.skip_next_rounded),
-                label: Text(l10n.skip),
+                label: Text(l10n.skip, maxLines: 1, softWrap: false),
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size.fromHeight(52),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                 ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              flex: 2,
+              flex: 5,
               child: state.solved
                   ? FilledButton.icon(
                       key: const ValueKey('next'),
@@ -517,18 +519,28 @@ class _LevelPicker extends StatelessWidget {
           return Semantics(
             label: l10n.levelLabel,
             container: true,
-            child: SegmentedButton<Level>(
-              showSelectedIcon: false,
-              segments: [
-                for (final l in Level.values)
-                  ButtonSegment(
-                    value: l,
-                    label: Text(l10n.levelName(l)),
-                    tooltip: l10n.levelPoints(l.points),
-                  ),
-              ],
-              selected: {level},
-              onSelectionChanged: (s) => onChanged(s.first),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 640 * scale),
+              child: SegmentedButton<Level>(
+                // Ocupa a largura disponível, com segmentos iguais.
+                expandedInsets: EdgeInsets.zero,
+                showSelectedIcon: false,
+                segments: [
+                  for (final l in Level.values)
+                    ButtonSegment(
+                      value: l,
+                      label: Text(
+                        l10n.levelName(l),
+                        maxLines: 1,
+                        softWrap: false,
+                        overflow: TextOverflow.fade,
+                      ),
+                      tooltip: l10n.levelPoints(l.points),
+                    ),
+                ],
+                selected: {level},
+                onSelectionChanged: (s) => onChanged(s.first),
+              ),
             ),
           );
         }
