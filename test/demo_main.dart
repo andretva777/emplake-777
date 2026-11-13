@@ -12,6 +12,8 @@ import 'package:emplake/core/providers.dart';
 import 'package:emplake/data/progress_repository.dart';
 import 'package:emplake/game/game_controller.dart';
 import 'package:emplake/game/tokens.dart';
+import 'package:emplake/routing/app_router.dart';
+import 'package:emplake/ui/help_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -80,6 +82,16 @@ Future<void> main() async {
       child: const EmplakeApp(),
     ),
   );
+
+  if (query['help'] == '1') {
+    await Future<void>.delayed(const Duration(milliseconds: 1500));
+    final context = container
+        .read(appRouterProvider)
+        .routerDelegate
+        .navigatorKey
+        .currentContext;
+    if (context != null && context.mounted) showHelpDialog(context);
+  }
 
   if (query['check'] == '1') {
     final game = container.read(gameProvider.notifier);
