@@ -1,16 +1,12 @@
 /// Integrantes do grupo, mostrados na página de login.
-const List<String> groupMembers = [
-  'André Esteves',
-  // TODO: preencher com o nome do(a) segundo(a) integrante do grupo.
-  'Segundo integrante',
-];
+const List<String> groupMembers = ['André Esteves'];
 
 /// ID do cliente OAuth "Web" do projeto Firebase (Authentication > Método de
 /// login > Google > Configuração do SDK da Web). No navegador o login com
 /// Google funciona via pop-up do Firebase mesmo sem ele, mas o valor é
 /// necessário em outras plataformas.
 const String googleWebClientId =
-    'SEU_CLIENT_ID.apps.googleusercontent.com';
+    '337632614086-i8g3bsvti15oluesaqdgmbr0s63h22pp.apps.googleusercontent.com';
 
 /// Largura a partir da qual o jogo usa o layout de duas colunas.
 const double wideLayoutBreakpoint = 900;

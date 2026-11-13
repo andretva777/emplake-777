@@ -22,11 +22,11 @@ class DefaultFirebaseOptions {
   static bool get isPlaceholder => web.apiKey.startsWith('SUBSTITUA');
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'SUBSTITUA_PELA_API_KEY',
-    appId: 'SUBSTITUA_PELO_APP_ID',
-    messagingSenderId: 'SUBSTITUA_PELO_SENDER_ID',
-    projectId: 'SUBSTITUA_PELO_PROJECT_ID',
-    authDomain: 'SUBSTITUA_PELO_PROJECT_ID.firebaseapp.com',
-    storageBucket: 'SUBSTITUA_PELO_PROJECT_ID.firebasestorage.app',
+    apiKey: 'AIzaSyCeRohGWiD4XWh-d_lLgxGm0xdxiaHZmck',
+    appId: '1:337632614086:web:5c94cdf5c1fd623ca529c7',
+    messagingSenderId: '337632614086',
+    projectId: 'emplake-777',
+    authDomain: 'emplake-777.firebaseapp.com',
+    storageBucket: 'emplake-777.firebasestorage.app',
   );
 }

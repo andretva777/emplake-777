@@ -6,5 +6,17 @@
     "public": "build/web",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [{ "source": "**", "destination": "/index.html" }]
+  },
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "emplake-777",
+          "configurations": {
+            "web": "1:337632614086:web:5c94cdf5c1fd623ca529c7"
+          }
+        }
+      }
+    }
   }
 }
