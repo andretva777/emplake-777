@@ -4,7 +4,6 @@
   "loginTagline": "Use the four digits on the plate to build an equality.",
   "groupMembersTitle": "Group members",
   "languageLabel": "Language",
-  "languageSystem": "Device language",
 
   "navGame": "Game",
   "navProgress": "Progress",
@@ -139,7 +138,6 @@
   "specificAlreadySolved": "You have already solved this plate: you can play it again, but it is worth no points.",
   "changePlate": "Change plate",
   "moneyLabel": "Coins",
-  "coinsAmount": "{coins} coins",
   "adventureSolvedLabel": "Plates",
   "adventurePotLabel": "Prize",
   "adventureIntroTitle": "Adventure mode",

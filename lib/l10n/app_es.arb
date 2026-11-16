@@ -4,7 +4,6 @@
   "loginTagline": "Usa los cuatro dígitos de la matrícula para formar una igualdad.",
   "groupMembersTitle": "Integrantes del grupo",
   "languageLabel": "Idioma",
-  "languageSystem": "Idioma del dispositivo",
 
   "navGame": "Juego",
   "navProgress": "Progreso",
@@ -139,7 +138,6 @@
   "specificAlreadySolved": "Ya resolviste esta placa: puedes jugarla de nuevo, pero no suma puntos.",
   "changePlate": "Cambiar placa",
   "moneyLabel": "Monedas",
-  "coinsAmount": "{coins} monedas",
   "adventureSolvedLabel": "Placas",
   "adventurePotLabel": "Premio",
   "adventureIntroTitle": "Modo aventura",

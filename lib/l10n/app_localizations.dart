@@ -124,12 +124,6 @@ abstract class AppLocalizations {
   /// **'Idioma'**
   String get languageLabel;
 
-  /// No description provided for @languageSystem.
-  ///
-  /// In pt, this message translates to:
-  /// **'Idioma do dispositivo'**
-  String get languageSystem;
-
   /// No description provided for @navGame.
   ///
   /// In pt, this message translates to:
@@ -861,12 +855,6 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'Moedas'**
   String get moneyLabel;
-
-  /// No description provided for @coinsAmount.
-  ///
-  /// In pt, this message translates to:
-  /// **'{coins} moedas'**
-  String coinsAmount(int coins);
 
   /// No description provided for @adventureSolvedLabel.
   ///

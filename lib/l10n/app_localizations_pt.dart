@@ -23,9 +23,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get languageLabel => 'Idioma';
 
   @override
-  String get languageSystem => 'Idioma do dispositivo';
-
-  @override
   String get navGame => 'Jogo';
 
   @override
@@ -432,11 +429,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get moneyLabel => 'Moedas';
-
-  @override
-  String coinsAmount(int coins) {
-    return '$coins moedas';
-  }
 
   @override
   String get adventureSolvedLabel => 'Placas';

@@ -4,7 +4,6 @@
   "loginTagline": "Use os quatro dígitos da placa para montar uma igualdade.",
   "groupMembersTitle": "Integrantes do grupo",
   "languageLabel": "Idioma",
-  "languageSystem": "Idioma do dispositivo",
 
   "navGame": "Jogo",
   "navProgress": "Progresso",
@@ -146,8 +145,6 @@
   "specificAlreadySolved": "Você já resolveu esta placa: pode jogar de novo, mas não ganha pontos.",
   "changePlate": "Trocar placa",
   "moneyLabel": "Moedas",
-  "coinsAmount": "{coins} moedas",
-  "@coinsAmount": {"placeholders":{"coins":{"type":"int"}}},
   "adventureSolvedLabel": "Placas",
   "adventurePotLabel": "Prêmio",
   "adventureIntroTitle": "Modo aventura",
