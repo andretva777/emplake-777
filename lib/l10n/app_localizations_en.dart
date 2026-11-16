@@ -164,7 +164,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errInvalidFactorial =>
-      'Factorial only works for integers from 0 to 18.';
+      'Factorial only works for integers from 0 to 17.';
 
   @override
   String get errInvalidPower => 'That power has no real result.';

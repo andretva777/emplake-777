@@ -164,7 +164,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get errInvalidFactorial =>
-      'El factorial solo vale para enteros de 0 a 18.';
+      'El factorial solo vale para enteros de 0 a 17.';
 
   @override
   String get errInvalidPower => 'Esa potencia no tiene resultado real.';

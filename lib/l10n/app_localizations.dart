@@ -355,7 +355,7 @@ abstract class AppLocalizations {
   /// No description provided for @errInvalidFactorial.
   ///
   /// In pt, this message translates to:
-  /// **'O fatorial só vale para inteiros de 0 a 18.'**
+  /// **'O fatorial só vale para inteiros de 0 a 17.'**
   String get errInvalidFactorial;
 
   /// No description provided for @errInvalidPower.

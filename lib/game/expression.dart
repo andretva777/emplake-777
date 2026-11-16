@@ -191,7 +191,8 @@ class Unary extends Node {
         final r = math.pow(v.abs(), 1 / 3).toDouble();
         return _snap(v < 0 ? -r : r);
       case UnaryKind.fact:
-        if (!isIntegerValue(v) || v < 0 || v > 18) {
+        // 18! já passa do limite de magnitude aceito.
+        if (!isIntegerValue(v) || v < 0 || v > 17) {
           throw const ExprError(ExprErrorKind.invalidFactorial);
         }
         var f = 1.0;

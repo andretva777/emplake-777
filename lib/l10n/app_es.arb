@@ -48,7 +48,7 @@
   "errDivisionByZero": "División por cero.",
   "errNonIntegerDivision": "En este nivel la división debe dar un resultado entero.",
   "errNegativeRoot": "No existe raíz cuadrada real de un número negativo.",
-  "errInvalidFactorial": "El factorial solo vale para enteros de 0 a 18.",
+  "errInvalidFactorial": "El factorial solo vale para enteros de 0 a 17.",
   "errInvalidPower": "Esa potencia no tiene resultado real.",
   "errOverflow": "El resultado es demasiado grande.",
   "errNotAllowed": "El operador {symbol} no está permitido en este nivel.",

@@ -52,7 +52,7 @@
   "errDivisionByZero": "Divisão por zero.",
   "errNonIntegerDivision": "Neste nível a divisão precisa ter resultado inteiro.",
   "errNegativeRoot": "Não existe raiz quadrada real de número negativo.",
-  "errInvalidFactorial": "O fatorial só vale para inteiros de 0 a 18.",
+  "errInvalidFactorial": "O fatorial só vale para inteiros de 0 a 17.",
   "errInvalidPower": "Essa potência não tem resultado real.",
   "errOverflow": "O resultado é grande demais.",
   "errNotAllowed": "O operador {symbol} não é permitido neste nível.",

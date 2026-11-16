@@ -80,6 +80,8 @@ void main() {
       expect(eval('=1+2').error?.kind, ExprErrorKind.emptySide);
       expect(eval('r(1-5)=2').error?.kind, ExprErrorKind.negativeRoot);
       expect(eval('(1/2)!=1').error?.kind, ExprErrorKind.invalidFactorial);
+      expect(eval('(9+9)!=1').error?.kind, ExprErrorKind.invalidFactorial);
+      expect(eval('(9+8)!=1').error, isNull);
       expect(eval('r4=2', Level.hard).error?.kind, ExprErrorKind.notAllowed);
       expect(eval('1+2=4').isCorrect, isFalse);
       expect(eval('1+2=4').error, isNull);

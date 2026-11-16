@@ -48,7 +48,7 @@
   "errDivisionByZero": "Division by zero.",
   "errNonIntegerDivision": "At this level, divisions must have an integer result.",
   "errNegativeRoot": "There is no real square root of a negative number.",
-  "errInvalidFactorial": "Factorial only works for integers from 0 to 18.",
+  "errInvalidFactorial": "Factorial only works for integers from 0 to 17.",
   "errInvalidPower": "That power has no real result.",
   "errOverflow": "The result is too large.",
   "errNotAllowed": "The operator {symbol} is not allowed at this level.",

@@ -164,7 +164,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get errInvalidFactorial =>
-      'O fatorial só vale para inteiros de 0 a 18.';
+      'O fatorial só vale para inteiros de 0 a 17.';
 
   @override
   String get errInvalidPower => 'Essa potência não tem resultado real.';
