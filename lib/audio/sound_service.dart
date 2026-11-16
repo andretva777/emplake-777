@@ -30,7 +30,7 @@ class SoundService {
         volume: 0.6,
       );
     } catch (_) {
-      // Som é opcional: uma falha de áudio nunca deve atrapalhar o jogo.
+      // Se o áudio falhar, o jogo segue sem som.
     }
   }
 

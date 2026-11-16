@@ -80,7 +80,6 @@ class GameState {
   /// Linha da equação: dígitos, operadores e o sinal de igual.
   final List<Piece> pieces;
 
-
   /// A placa atual já foi resolvida (aguardando "Próxima placa").
   final bool solved;
 

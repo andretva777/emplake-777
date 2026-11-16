@@ -454,7 +454,7 @@ class AdventureController extends Notifier<AdventureState>
         .ignore();
   }
 
-  /// Solução mais simples da placa atual com os operadores básicos.
+  /// Solução mais simples da placa atual com os operadores já liberados.
   Solution? currentSolution() {
     final plate = state.plate;
     if (plate == null) return null;

@@ -32,15 +32,15 @@ enum Tok {
   }
 }
 
-/// Níveis de jogo. Quanto menos operadores disponíveis, mais difícil.
 /// Quais operadores valem numa partida e se a divisão pode dar resultado
-/// não inteiro. Os níveis seguem regras fixas; a aventura libera operadores
-/// aos poucos.
+/// não inteiro. Os níveis têm regras fixas; a aventura libera operadores aos
+/// poucos.
 abstract interface class OperatorRules {
   bool allows(Tok t);
   bool get allowsFractions;
 }
 
+/// Níveis de jogo. Quanto menos operadores disponíveis, mais difícil.
 enum Level implements OperatorRules {
   easy(1, [
     Tok.plus, Tok.minus, Tok.times, Tok.divide, Tok.lparen, Tok.rparen, //
