@@ -385,6 +385,15 @@ class GameController extends Notifier<GameState> implements LineEditor {
   /// O jogador já resolveu esta placa antes.
   bool wasSolved(String plate) => _solvedPlates?.contains(plate) ?? false;
 
+  /// Placa resolvida e gravada pelo modo aventura. Entra no cache para não
+  /// ser sorteada de novo; sem cache carregado, ela virá da nuvem depois.
+  void addSolved(String plate, int points) {
+    final solved = _solvedPlates;
+    if (solved == null || !solved.add(plate)) return;
+    _score += points;
+    state = state.copyWith(score: _score);
+  }
+
   /// Modo específico: começa a jogar com a placa digitada.
   PlateChoice choosePlate(String plate) {
     if (!isPlate(plate)) return PlateChoice.invalid;

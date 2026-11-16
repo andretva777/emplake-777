@@ -113,6 +113,39 @@ void main() {
     expect(c.read(adventureProvider).plate, isNot('2222'));
   });
 
+  test('placa resolvida vai para a nuvem e não é sorteada de novo', () async {
+    final (c, repo) = await setUp(prefs: {'adventure.demo': saved()});
+    final adventure = c.read(adventureProvider.notifier);
+    await adventure.ensureReady();
+    await c.read(gameProvider.notifier).ensureReady();
+    adventure.insertAt(1, Tok.plus);
+    adventure.insertAt(5, Tok.times); // 2+2 = 2*2
+    adventure.check();
+    await Future<void>.delayed(Duration.zero);
+
+    // Só operadores básicos: conta como o nível difícil.
+    expect(repo.solved, {'2222': Level.hard});
+    final game = c.read(gameProvider.notifier);
+    expect(game.wasSolved('2222'), isTrue);
+    expect(c.read(gameProvider).score, Level.hard.points);
+  });
+
+  test('não sorteia placas que o jogador já resolveu', () async {
+    // Só as placas começadas em 1 continuam inéditas.
+    final solved = {
+      for (var i = 0; i < 10000; i++)
+        if (i ~/ 1000 != 1) i.toString().padLeft(4, '0'): Level.easy,
+    };
+    final (c, _) = await setUp(repo: FakeProgressRepository(solved: solved));
+    final adventure = c.read(adventureProvider.notifier);
+    await adventure.ensureReady();
+    adventure.start();
+    for (var i = 0; i < 20; i++) {
+      expect(c.read(adventureProvider).plate, startsWith('1'));
+      adventure.skip();
+    }
+  });
+
   test('errar e pular custam; sem dinheiro a aventura acaba com recorde',
       () async {
     final (c, repo) = await setUp(

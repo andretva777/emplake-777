@@ -75,6 +75,10 @@ enum Level implements OperatorRules {
   @override
   bool allows(Tok t) => operators.contains(t);
 
+  /// Nível mais difícil em que todos os operadores de [used] são permitidos.
+  static Level hardestAllowing(Iterable<Tok> used) =>
+      values.lastWhere((l) => used.every(l.allows), orElse: () => Level.easy);
+
   static Level fromName(String? name) =>
       values.firstWhere((l) => l.name == name, orElse: () => Level.easy);
 }

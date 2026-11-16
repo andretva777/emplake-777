@@ -174,6 +174,9 @@ class AdventureController extends Notifier<AdventureState>
   /// Placas já vistas nesta aventura, para não repetir.
   final Set<String> _seen = {};
 
+  /// Placas que o jogador já resolveu em qualquer modo (vêm da nuvem).
+  final Set<String> _solvedPlates = {};
+
   String get _prefsKey =>
       'adventure.${ref.read(currentUserProvider)?.uid ?? 'anon'}';
 
@@ -186,6 +189,7 @@ class AdventureController extends Notifier<AdventureState>
     _clock = null;
     _bestLoaded = false;
     _seen.clear();
+    _solvedPlates.clear();
     _nextId = 0;
     return _restore() ?? const AdventureState();
   }
@@ -259,13 +263,15 @@ class AdventureController extends Notifier<AdventureState>
 
   // ------------------------------------------------------------------ partida
 
-  /// Carrega o recorde da nuvem (uma vez por sessão).
+  /// Carrega da nuvem o recorde e as placas já resolvidas (uma vez por
+  /// sessão).
   Future<void> ensureReady() async {
     if (_bestLoaded) return;
     final repo = ref.read(progressRepositoryProvider);
     final progress =
         repo == null ? const UserProgress() : await repo.fetchProgress();
     _bestLoaded = true;
+    _solvedPlates.addAll(progress.solved.keys);
     state = state.copyWith(best: math.max(state.best, progress.adventureBest));
   }
 
@@ -288,7 +294,10 @@ class AdventureController extends Notifier<AdventureState>
     String? chosen;
     for (var attempt = 0; attempt < 600 && chosen == null; attempt++) {
       final candidate = _random.nextInt(10000).toString().padLeft(4, '0');
-      if (attempt < 400 && _seen.contains(candidate)) continue;
+      // Só placas inéditas; depois de muitas tentativas, vale repetir.
+      final repeated =
+          _seen.contains(candidate) || _solvedPlates.contains(candidate);
+      if (attempt < 400 && repeated) continue;
       if (!solver.isSolvable(digitsOf(candidate))) continue;
       chosen = candidate;
     }
@@ -424,6 +433,25 @@ class AdventureController extends Notifier<AdventureState>
       solved: true,
       feedback: () => FeedbackReward(reward),
     ));
+    _recordSolved();
+  }
+
+  /// Grava a placa resolvida na nuvem, como nos outros modos, para que ela
+  /// não seja sorteada de novo. Vale os pontos do nível mais difícil que
+  /// permite os operadores usados.
+  void _recordSolved() {
+    final plate = state.plate;
+    if (plate == null || !_solvedPlates.add(plate)) return;
+    final level = Level.hardestAllowing(
+      state.pieces.whereType<OpPiece>().map((p) => p.tok),
+    );
+    ref.read(gameProvider.notifier).addSolved(plate, level.points);
+    // Falha ao gravar não interrompe a aventura.
+    ref
+        .read(progressRepositoryProvider)
+        ?.markSolved(plate, level)
+        .then((_) => ref.read(progressVersionProvider.notifier).bump())
+        .ignore();
   }
 
   /// Solução mais simples da placa atual com os operadores básicos.
