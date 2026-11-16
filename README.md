@@ -3,6 +3,11 @@
 Jogo de matemática com placas de carro: use os quatro dígitos da placa, na
 ordem, para montar uma igualdade verdadeira. Feito em Flutter (web).
 
+**Jogue em <https://emplake-777.web.app/>**
+
+Trabalho individual de André Esteves, baseado no Emplake original
+(<https://www.cyan-lang.org/emplake/>).
+
 Modos de jogo:
 
 - **Aleatório**: placas sorteadas entre as que o jogador ainda não resolveu,
@@ -12,7 +17,8 @@ Modos de jogo:
 - **Aventura**: sobrevivência com moedas. Começa com 2000 moedas e só
   `+ − × ÷ ( )`; acertos rendem um prêmio que cai com o tempo, erros e pulos
   custam moedas e os operadores avançados são comprados. Acaba quando as
-  moedas acabam; o recorde fica salvo na nuvem.
+  moedas acabam; o recorde fica salvo na nuvem. As placas resolvidas aqui
+  também contam para a pontuação e não voltam a ser sorteadas.
 
 ## Como rodar
 
@@ -50,7 +56,7 @@ Testes: `flutter test`.
    ```
 
 5. Em `lib/core/constants.dart`, preencha `googleWebClientId` (Authentication
-   > Google > Configuração do SDK da Web) e os nomes em `groupMembers`.
+   > Google > Configuração do SDK da Web) e o nome em `groupMembers`.
 6. Ao publicar, adicione o domínio do site em **Authentication >
    Configurações > Domínios autorizados**.
 
