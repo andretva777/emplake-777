@@ -242,9 +242,6 @@ class _Parser {
   final List<Object> items;
   int pos = 0;
 
-  /// Profundidade de `|...|` abertos: dentro deles, um `|` fecha o módulo.
-  int absDepth = 0;
-
   Object? get peek => pos < items.length ? items[pos] : null;
 
   bool accept(Tok t) {
@@ -333,43 +330,30 @@ class _Parser {
     switch (t) {
       case Tok.lparen:
         pos++;
-        final saved = absDepth;
-        absDepth = 0;
         final inner = expr();
-        absDepth = saved;
         if (!accept(Tok.rparen)) {
           throw const ExprError(ExprErrorKind.unbalanced, '(');
         }
         return Paren(inner);
       case Tok.abs:
-        if (absDepth > 0) {
-          // Aqui o '|' só poderia fechar um módulo, mas falta o operando.
-          throw const ExprError(ExprErrorKind.missingOperand);
-        }
+        // Onde se espera um valor, `|` só pode abrir um módulo (o que fecha
+        // vem sempre depois de um valor), então módulos podem ser aninhados.
         pos++;
-        absDepth++;
         final inner = expr();
-        absDepth--;
         if (!accept(Tok.abs)) {
           throw const ExprError(ExprErrorKind.unbalanced, '|');
         }
         return Unary(UnaryKind.abs, inner);
       case Tok.floorL:
         pos++;
-        final saved = absDepth;
-        absDepth = 0;
         final inner = expr();
-        absDepth = saved;
         if (!accept(Tok.floorR)) {
           throw const ExprError(ExprErrorKind.unbalanced, '⌊');
         }
         return Unary(UnaryKind.floor, inner);
       case Tok.ceilL:
         pos++;
-        final saved = absDepth;
-        absDepth = 0;
         final inner = expr();
-        absDepth = saved;
         if (!accept(Tok.ceilR)) {
           throw const ExprError(ExprErrorKind.unbalanced, '⌈');
         }

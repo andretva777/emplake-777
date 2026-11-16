@@ -46,6 +46,15 @@ void main() {
       expect(eval('|2-5|+|1-2|=4').isCorrect, isTrue);
     });
 
+    test('módulo dentro de módulo', () {
+      expect(eval('|2-|3-5||=0').isCorrect, isTrue);
+      expect(eval('||2-5|-1|=2').isCorrect, isTrue);
+      expect(eval('|2*|3|-8|=2').isCorrect, isTrue);
+      expect(eval('|2+|=1').error?.kind, ExprErrorKind.missingOperand);
+      expect(eval('|2|3|=1').error?.kind, ExprErrorKind.missingOperator);
+      expect(eval('|2-5=3').error?.kind, ExprErrorKind.unbalanced);
+    });
+
     test('raízes e fatorial', () {
       expect(eval('c8=2').isCorrect, isTrue);
       expect(eval('r9!=6').isCorrect, isTrue);
