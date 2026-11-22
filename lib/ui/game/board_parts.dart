@@ -29,21 +29,34 @@ import 'fly_back.dart';
 
 /// Disposição do tabuleiro, comum a todos os modos: em telas largas, a
 /// equação à esquerda e os controles à direita; em telas estreitas, tudo em
-/// uma coluna.
+/// uma coluna. O [footer] (resultado da verificação e os botões Verificar e
+/// Pular) fica sempre visível: nas telas estreitas, fixo embaixo, fora da
+/// rolagem; nas largas, no fim do cartão dos controles.
 class BoardLayout extends StatelessWidget {
   const BoardLayout({
     super.key,
     required this.top,
     required this.stage,
     required this.controls,
+    required this.footer,
+    this.compactTrailing,
   });
 
   /// Seletores e informações acima do tabuleiro.
   final List<Widget> top;
 
-  /// Placa, balança e equação; recebe a largura disponível.
-  final Widget Function(double width) stage;
+  /// Placa, balança e equação; recebe a largura disponível e se o espaço é
+  /// apertado (tela estreita).
+  final Widget Function(double width, bool compact) stage;
   final Widget controls;
+  final Widget footer;
+
+  /// Só nas telas estreitas: vem depois dos controles (a balança, que lá
+  /// sai do palco para a equação e o teclado caberem juntos na tela).
+  final Widget? compactTrailing;
+
+  /// Chave do rodapé fixo (para localizá-lo nos testes).
+  static const footerKey = ValueKey('board-footer');
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +80,7 @@ class BoardLayout extends StatelessWidget {
                   children: [
                     Expanded(
                       child: LayoutBuilder(
-                        builder: (context, c) => stage(c.maxWidth),
+                        builder: (context, c) => stage(c.maxWidth, false),
                       ),
                     ),
                     const SizedBox(width: 32),
@@ -76,7 +89,14 @@ class BoardLayout extends StatelessWidget {
                       child: Card(
                         child: Padding(
                           padding: const EdgeInsets.all(16),
-                          child: controls,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              controls,
+                              const SizedBox(height: 16),
+                              KeyedSubtree(key: footerKey, child: footer),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -87,22 +107,51 @@ class BoardLayout extends StatelessWidget {
           );
         }
 
+        final scheme = Theme.of(context).colorScheme;
         final width = math.min(constraints.maxWidth - 2 * pad, 620.0);
-        return SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(pad, 4, pad, 20),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 620),
-              child: Column(
-                children: [
-                  ...header,
-                  stage(width),
-                  const SizedBox(height: 12),
-                  controls,
-                ],
+        Widget centered(Widget child) => Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 620),
+                child: child,
+              ),
+            );
+        return Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(pad, 4, pad, 16),
+                child: centered(
+                  Column(
+                    children: [
+                      ...header,
+                      stage(width, true),
+                      const SizedBox(height: 12),
+                      controls,
+                      if (compactTrailing case final trailing?) ...[
+                        const SizedBox(height: 16),
+                        trailing,
+                      ],
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
+            // Rodapé fixo: o resultado aparece logo acima do botão tocado.
+            DecoratedBox(
+              key: footerKey,
+              decoration: BoxDecoration(
+                color: scheme.surface,
+                border: Border(
+                  top: BorderSide(color: scheme.outlineVariant),
+                ),
+              ),
+              // Embaixo, folga para o botão saliente da barra de navegação.
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(pad, 8, pad, 18),
+                child: centered(footer),
+              ),
+            ),
+          ],
         );
       },
     );
@@ -119,11 +168,20 @@ class PlateHeader extends StatelessWidget {
     required this.plate,
     required this.left,
     required this.right,
+    this.compact = false,
   });
 
   final String plate;
   final double? left;
   final double? right;
+
+  /// Tela estreita: placa menor e sem a balança (que vai para depois do
+  /// teclado, em [compactBalance]), para a equação e o teclado caberem.
+  final bool compact;
+
+  /// Balança das telas estreitas.
+  static Widget compactBalance({double? left, double? right}) =>
+      BalanceScale(left: left, right: right, height: 110);
 
   @override
   Widget build(BuildContext context) {
@@ -147,11 +205,13 @@ class PlateHeader extends StatelessWidget {
             key: ValueKey(plate),
             text: plate,
             country: l10n.plateCountry,
-            height: 58,
+            height: compact ? 46 : 58,
           ),
         ),
-        const SizedBox(height: 8),
-        BalanceScale(left: left, right: right, height: 150),
+        if (!compact) ...[
+          const SizedBox(height: 8),
+          BalanceScale(left: left, right: right, height: 150),
+        ],
       ],
     );
   }
@@ -174,10 +234,14 @@ class EquationCard extends StatelessWidget {
     required this.onCancel,
     required this.onRemove,
     required this.onCaret,
+    this.compact = false,
   });
 
   final List<Piece> pieces;
   final int caret;
+
+  /// Tela estreita: fórmula mais baixa.
+  final bool compact;
   final BoardKeys keys;
   final String latex;
   final bool locked;
@@ -214,13 +278,32 @@ class EquationCard extends StatelessWidget {
               const SizedBox(height: 10),
               const Divider(height: 1),
               const SizedBox(height: 10),
-              FormulaView(latex: latex),
+              FormulaView(latex: latex, height: compact ? 52 : 64),
             ],
           ),
         ),
       ),
     );
   }
+}
+
+/// Rodapé do tabuleiro: o resultado da última verificação, logo acima dos
+/// botões.
+class BoardFooter extends StatelessWidget {
+  const BoardFooter({super.key, required this.feedback, required this.actions});
+
+  final GameFeedback? feedback;
+  final BoardActions actions;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FeedbackBanner(feedback: feedback, bottomGap: 8),
+          actions,
+        ],
+      );
 }
 
 /// Botões de baixo: pular (ou equivalente) e verificar / próxima.
@@ -481,9 +564,10 @@ class LevelPicker extends StatelessWidget {
 
 /// Fórmula renderizada em LaTeX, logo abaixo da linha montada pelo jogador.
 class FormulaView extends StatelessWidget {
-  const FormulaView({super.key, required this.latex});
+  const FormulaView({super.key, required this.latex, this.height = 64});
 
   final String latex;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
@@ -506,7 +590,7 @@ class FormulaView extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           SizedBox(
-            height: 64,
+            height: height,
             child: Center(
               child: FittedBox(
                 fit: BoxFit.scaleDown,
@@ -532,12 +616,21 @@ class FormulaView extends StatelessWidget {
   }
 }
 
-/// Resultado da última verificação (ou uma dica inicial).
+/// Resultado da última verificação (ou uma dica inicial). Sem nada a mostrar,
+/// não ocupa espaço.
 class FeedbackBanner extends StatelessWidget {
-  const FeedbackBanner({super.key, required this.feedback, this.hint});
+  const FeedbackBanner({
+    super.key,
+    required this.feedback,
+    this.hint,
+    this.bottomGap = 0,
+  });
 
   final GameFeedback? feedback;
   final String? hint;
+
+  /// Espaço abaixo do aviso, quando ele aparece.
+  final double bottomGap;
 
   @override
   Widget build(BuildContext context) {
@@ -602,6 +695,7 @@ class FeedbackBanner extends StatelessWidget {
                 key: ValueKey(data.$2),
                 liveRegion: feedback != null,
                 child: Container(
+                  margin: EdgeInsets.only(bottom: bottomGap),
                   width: double.infinity,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 10),

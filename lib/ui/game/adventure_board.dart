@@ -356,13 +356,14 @@ class _AdventureBoardState extends ConsumerState<_AdventureBoard>
       onKeyEvent: _onKey,
       child: BoardLayout(
         top: [_Hud(state: state, onGiveUp: _giveUp)],
-        stage: (width) => Column(
+        stage: (width, compact) => Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             PlateHeader(
               plate: plate,
               left: evaluation.left.value,
               right: evaluation.right.value,
+              compact: compact,
             ),
             const SizedBox(height: 12),
             EquationCard(
@@ -373,6 +374,7 @@ class _AdventureBoardState extends ConsumerState<_AdventureBoard>
               locked: !enabled,
               solved: state.solved,
               unit: BoardLayout.unitFor(width),
+              compact: compact,
               errorTick: state.errorTick,
               onDrop: dropPiece,
               onCancel: dropOutside,
@@ -380,41 +382,42 @@ class _AdventureBoardState extends ConsumerState<_AdventureBoard>
               onCaret: _adventure.setCaret,
             ),
             const SizedBox(height: 10),
+            // Dica inicial; o resultado da verificação fica no rodapé.
             FeedbackBanner(
-              feedback: state.feedback,
+              feedback: null,
               hint: state.hasOperators ? null : l10n.editHint,
             ),
           ],
         ),
-        controls: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            OperatorTray(
-              keys: boardKeys,
-              operators: AdventureRules.all,
-              locked: {
-                for (final tok in AdventureRules.all)
-                  if (!state.rules.allows(tok)) tok: Upgrade.of(tok)!.price,
-              },
-              onLockedTap: _buy,
-              enabled: enabled,
-              canClear: state.hasOperators,
-              canDelete: state.canDeleteBeforeCaret,
-              onInsert: _adventure.insertAtCaret,
-              onDelete: deleteBeforeCaret,
-              onClear: _clear,
-            ),
-            const SizedBox(height: 16),
-            BoardActions(
-              solved: state.solved,
-              secondaryLabel: l10n.adventureSkip(AdventureEconomy.skipCost),
-              secondaryIcon: Icons.skip_next_rounded,
-              onSecondary: state.canSkip ? _skip : null,
-              onCheck: _adventure.check,
-              onNext: _next,
-            ),
-          ],
+        controls: OperatorTray(
+          keys: boardKeys,
+          operators: AdventureRules.all,
+          locked: {
+            for (final tok in AdventureRules.all)
+              if (!state.rules.allows(tok)) tok: Upgrade.of(tok)!.price,
+          },
+          onLockedTap: _buy,
+          enabled: enabled,
+          canClear: state.hasOperators,
+          canDelete: state.canDeleteBeforeCaret,
+          onInsert: _adventure.insertAtCaret,
+          onDelete: deleteBeforeCaret,
+          onClear: _clear,
+        ),
+        compactTrailing: PlateHeader.compactBalance(
+          left: evaluation.left.value,
+          right: evaluation.right.value,
+        ),
+        footer: BoardFooter(
+          feedback: state.feedback,
+          actions: BoardActions(
+            solved: state.solved,
+            secondaryLabel: l10n.adventureSkip(AdventureEconomy.skipCost),
+            secondaryIcon: Icons.skip_next_rounded,
+            onSecondary: state.canSkip ? _skip : null,
+            onCheck: _adventure.check,
+            onNext: _next,
+          ),
         ),
       ),
     );

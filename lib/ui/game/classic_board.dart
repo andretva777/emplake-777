@@ -195,13 +195,14 @@ class _ClassicBoardState extends ConsumerState<_ClassicBoard>
       onKeyEvent: _onKey,
       child: BoardLayout(
         top: [levelPicker],
-        stage: (width) => Column(
+        stage: (width, compact) => Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             PlateHeader(
               plate: plate,
               left: evaluation.left.value,
               right: evaluation.right.value,
+              compact: compact,
             ),
             const SizedBox(height: 12),
             EquationCard(
@@ -212,6 +213,7 @@ class _ClassicBoardState extends ConsumerState<_ClassicBoard>
               locked: !enabled,
               solved: state.solved,
               unit: BoardLayout.unitFor(width),
+              compact: compact,
               errorTick: state.errorTick,
               onDrop: dropPiece,
               onCancel: dropOutside,
@@ -219,38 +221,38 @@ class _ClassicBoardState extends ConsumerState<_ClassicBoard>
               onCaret: _game.setCaret,
             ),
             const SizedBox(height: 10),
+            // Dica inicial; o resultado da verificação fica no rodapé.
             FeedbackBanner(
-              feedback: state.feedback,
+              feedback: null,
               hint: state.hasOperators ? null : l10n.editHint,
             ),
           ],
         ),
-        controls: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            OperatorTray(
-              keys: boardKeys,
-              operators: state.level.operators,
-              enabled: enabled,
-              canClear: state.hasOperators,
-              canDelete: state.canDeleteBeforeCaret,
-              onInsert: _game.insertAtCaret,
-              onDelete: deleteBeforeCaret,
-              onClear: _clear,
-            ),
-            const SizedBox(height: 16),
-            BoardActions(
-              solved: state.solved,
-              secondaryLabel: _specific ? l10n.changePlate : l10n.skip,
-              secondaryIcon: _specific
-                  ? Icons.edit_rounded
-                  : Icons.skip_next_rounded,
-              onSecondary: _specific ? _changePlate : _skip,
-              onCheck: _game.check,
-              onNext: _next,
-            ),
-          ],
+        controls: OperatorTray(
+          keys: boardKeys,
+          operators: state.level.operators,
+          enabled: enabled,
+          canClear: state.hasOperators,
+          canDelete: state.canDeleteBeforeCaret,
+          onInsert: _game.insertAtCaret,
+          onDelete: deleteBeforeCaret,
+          onClear: _clear,
+        ),
+        compactTrailing: PlateHeader.compactBalance(
+          left: evaluation.left.value,
+          right: evaluation.right.value,
+        ),
+        footer: BoardFooter(
+          feedback: state.feedback,
+          actions: BoardActions(
+            solved: state.solved,
+            secondaryLabel: _specific ? l10n.changePlate : l10n.skip,
+            secondaryIcon:
+                _specific ? Icons.edit_rounded : Icons.skip_next_rounded,
+            onSecondary: _specific ? _changePlate : _skip,
+            onCheck: _game.check,
+            onNext: _next,
+          ),
         ),
       ),
     );
