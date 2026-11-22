@@ -725,6 +725,180 @@ class FeedbackBanner extends StatelessWidget {
   }
 }
 
+/// A verificação passou de "não resolvida" para "correta" (e não apenas
+/// trocou uma mensagem de acerto por outra, como no aviso de falha ao gravar).
+bool isNewSuccess(GameFeedback? previous, GameFeedback? next) =>
+    _isSuccess(next) && !_isSuccess(previous);
+
+bool _isSuccess(GameFeedback? f) => f is FeedbackCorrect || f is FeedbackReward;
+
+/// Comemora um acerto: um selo grande salta no meio da tela, com confetes,
+/// fica um instante e some sozinho. Não bloqueia a tela nem avança a placa.
+void showCelebration(BuildContext context, String message) {
+  final overlay = Overlay.maybeOf(context, rootOverlay: true);
+  if (overlay == null) return;
+  late final OverlayEntry entry;
+  entry = OverlayEntry(
+    builder: (_) => CelebrationBadge(
+      message: message,
+      onDone: () {
+        if (entry.mounted) entry.remove();
+      },
+    ),
+  );
+  overlay.insert(entry);
+}
+
+/// Selo de acerto mostrado por [showCelebration].
+class CelebrationBadge extends StatefulWidget {
+  const CelebrationBadge({
+    super.key,
+    required this.message,
+    required this.onDone,
+  });
+
+  final String message;
+  final VoidCallback onDone;
+
+  /// Tempo total na tela.
+  static const duration = Duration(milliseconds: 2200);
+
+  @override
+  State<CelebrationBadge> createState() => _CelebrationBadgeState();
+}
+
+class _CelebrationBadgeState extends State<CelebrationBadge>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: CelebrationBadge.duration,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.forward().whenComplete(widget.onDone);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final still = MediaQuery.disableAnimationsOf(context);
+    final colors = [
+      scheme.primary,
+      scheme.tertiary,
+      scheme.secondary,
+      scheme.error,
+    ];
+
+    return IgnorePointer(
+      child: ExcludeSemantics(
+        child: Center(
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              final t = _controller.value;
+              // Entra com um pulo (0–25%), fica e some no fim (85–100%).
+              final scale = still
+                  ? 1.0
+                  : Curves.elasticOut.transform((t / 0.25).clamp(0.0, 1.0));
+              final opacity =
+                  still ? 1.0 : 1 - ((t - 0.85) / 0.15).clamp(0.0, 1.0);
+              return Opacity(
+                opacity: opacity,
+                child: CustomPaint(
+                  painter: still
+                      ? null
+                      : _ConfettiPainter(progress: t, colors: colors),
+                  child: Transform.scale(scale: scale, child: child),
+                ),
+              );
+            },
+            child: Material(
+              color: scheme.tertiaryContainer,
+              elevation: 10,
+              borderRadius: BorderRadius.circular(28),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(32, 24, 32, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.check_circle_rounded,
+                      size: 72,
+                      color: scheme.tertiary,
+                    ),
+                    const SizedBox(height: 8),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 280),
+                      child: Text(
+                        widget.message,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: scheme.onTertiaryContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Confetes que saem do centro do selo e caem enquanto somem.
+class _ConfettiPainter extends CustomPainter {
+  _ConfettiPainter({required this.progress, required this.colors});
+
+  final double progress;
+  final List<Color> colors;
+
+  static const _count = 22;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final t = (progress / 0.7).clamp(0.0, 1.0);
+    if (t >= 1) return;
+    final center = size.center(Offset.zero);
+    final reach = size.shortestSide * 0.5 + 90;
+    final paint = Paint();
+    for (var i = 0; i < _count; i++) {
+      final angle = i * 2 * math.pi / _count + (i.isEven ? 0.15 : -0.1);
+      final speed = 0.65 + (i % 5) * 0.09;
+      final d = Curves.easeOutCubic.transform(t) * reach * speed;
+      final fall = 60 * t * t;
+      final p = center + Offset(math.cos(angle) * d, math.sin(angle) * d + fall);
+      paint.color = colors[i % colors.length].withValues(alpha: 1 - t);
+      canvas.save();
+      canvas.translate(p.dx, p.dy);
+      canvas.rotate(angle + t * 6);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(center: Offset.zero, width: 10, height: 6),
+          const Radius.circular(2),
+        ),
+        paint,
+      );
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ConfettiPainter old) => old.progress != progress;
+}
+
 /// Balança o filho de um lado para o outro sempre que [trigger] muda.
 class Shake extends StatefulWidget {
   const Shake({super.key, required this.trigger, required this.child});

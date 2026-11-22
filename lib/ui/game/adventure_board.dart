@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers.dart';
 import '../../game/adventure_controller.dart';
+import '../../game/game_controller.dart';
 import '../../game/line_editing.dart';
 import '../../game/tokens.dart';
 import '../../l10n/app_localizations.dart';
@@ -340,6 +341,11 @@ class _AdventureBoardState extends ConsumerState<_AdventureBoard>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(adventureProvider);
+    // Acertou: comemora de forma bem visível (a placa só muda no botão).
+    ref.listen(adventureProvider.select((s) => s.feedback), (previous, next) {
+      if (next is! FeedbackReward || !isNewSuccess(previous, next)) return;
+      showCelebration(context, l10n.rewardMessage(next.coins));
+    });
     // Nova placa: o relógio volta a contar.
     ref.listen(adventureProvider.select((s) => (s.plate, s.solved)), (_, _) {
       _syncClock();

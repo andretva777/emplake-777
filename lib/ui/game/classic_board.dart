@@ -144,6 +144,14 @@ class _ClassicBoardState extends ConsumerState<_ClassicBoard>
     final state = ref.watch(gameProvider);
     final specific = ref.watch(gameModeProvider) == GameMode.specific;
     final l10n = AppLocalizations.of(context);
+    // Acertou: comemora de forma bem visível (a placa só muda no botão).
+    ref.listen(gameProvider.select((s) => s.feedback), (previous, next) {
+      if (next is! FeedbackCorrect || !isNewSuccess(previous, next)) return;
+      showCelebration(
+        context,
+        next.repeated ? l10n.correctRepeated : l10n.correctMessage(next.points),
+      );
+    });
     final theme = Theme.of(context);
     final levelPicker = LevelPicker(level: state.level, onChanged: _setLevel);
     final plate = state.plate;
