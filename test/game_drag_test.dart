@@ -3,6 +3,8 @@ import 'package:emplake/game/tokens.dart';
 import 'package:emplake/ui/game/equation_line.dart';
 import 'package:emplake/ui/game/operator_tray.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -76,15 +78,85 @@ void main() {
     expect(line(c.read(gameProvider)), '81=3+1');
   });
 
-  testWidgets('tocar em um operador da linha o devolve ao teclado',
+  testWidgets('tocar em um operador da linha põe o cursor, sem apagá-lo',
       (tester) async {
     final c = await pumpGame(tester, pieces: '8+1=31');
     final op = find.byKey(
       EquationLine.valueKeyFor(c.read(gameProvider).pieces[1]),
     );
-    await tester.tap(op);
+    await tester.tapAt(tester.getCenter(op) + const Offset(10, 0));
+    await tester.pump(const Duration(seconds: 1));
+    expect(line(c.read(gameProvider)), '8+1=31');
+    expect(c.read(gameProvider).caret, 2);
+    await tester.tapAt(tester.getCenter(op) - const Offset(10, 0));
+    await tester.pump();
+    expect(c.read(gameProvider).caret, 1);
+  });
+
+  testWidgets('tocar numa tecla insere o operador no cursor', (tester) async {
+    final c = await pumpGame(tester);
+    // O cursor aparece na linha, no começo.
+    expect(find.byKey(const ValueKey('caret')), findsOneWidget);
+    expect(c.read(gameProvider).caret, 0);
+
+    // Lado direito do 8: o cursor vai para entre o 8 e o 1.
+    await tester.tapAt(tester.getCenter(find.text('8')) + const Offset(12, 0));
+    await tester.pump();
+    expect(c.read(gameProvider).caret, 1);
+
+    await tester.tap(find.byKey(OperatorTray.valueKeyFor(Tok.plus)));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(line(c.read(gameProvider)), '8+1=31');
+    // O cursor avança: o próximo operador entra depois do +.
+    await tester.tap(find.byKey(OperatorTray.valueKeyFor(Tok.sqrt)));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(line(c.read(gameProvider)), '8+r1=31');
+    expect(c.read(gameProvider).caret, 3);
+  });
+
+  testWidgets('a tecla apagar tira o operador à esquerda do cursor',
+      (tester) async {
+    final c = await pumpGame(tester, pieces: '8+1=31');
+    final delete = find.byKey(OperatorTray.deleteKey);
+    // Cursor no começo: não há o que apagar.
+    expect(tester.widget<TextButton>(delete).onPressed, isNull);
+
+    final op = find.byKey(
+      EquationLine.valueKeyFor(c.read(gameProvider).pieces[1]),
+    );
+    await tester.tapAt(tester.getCenter(op) + const Offset(10, 0));
+    await tester.pump();
+    await tester.tap(delete);
     await tester.pump(const Duration(seconds: 1));
     expect(line(c.read(gameProvider)), '81=31');
+    expect(c.read(gameProvider).caret, 1);
+    // À esquerda do cursor agora está o 8: dígitos não são apagados.
+    expect(tester.widget<TextButton>(delete).onPressed, isNull);
+  });
+
+  testWidgets('o teclado do computador edita a linha', (tester) async {
+    final c = await pumpGame(tester);
+    Future<void> type(LogicalKeyboardKey key, [String? character]) async {
+      await tester.sendKeyDownEvent(key, character: character);
+      await tester.sendKeyUpEvent(key);
+      await tester.pump();
+    }
+
+    await type(LogicalKeyboardKey.arrowRight);
+    expect(c.read(gameProvider).caret, 1);
+    await type(LogicalKeyboardKey.numpadAdd, '+');
+    expect(line(c.read(gameProvider)), '8+1=31');
+    await type(LogicalKeyboardKey.keyR, 'r');
+    expect(line(c.read(gameProvider)), '8+r1=31');
+    await type(LogicalKeyboardKey.backspace);
+    expect(line(c.read(gameProvider)), '8+1=31');
+    await type(LogicalKeyboardKey.end);
+    expect(c.read(gameProvider).caret, 6);
+    await type(LogicalKeyboardKey.keyX, 'x');
+    expect(line(c.read(gameProvider)), '8+1=31*');
+    // Letras que não são operadores são ignoradas.
+    await type(LogicalKeyboardKey.keyQ, 'q');
+    expect(line(c.read(gameProvider)), '8+1=31*');
   });
 
   testWidgets('arrastar com o mouse também funciona', (tester) async {

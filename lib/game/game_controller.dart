@@ -65,6 +65,7 @@ class GameState {
     this.level = Level.easy,
     this.plate,
     this.pieces = const [],
+    this.caret = 0,
     this.solved = false,
     this.exhausted = false,
     this.feedback,
@@ -79,6 +80,9 @@ class GameState {
 
   /// Linha da equação: dígitos, operadores e o sinal de igual.
   final List<Piece> pieces;
+
+  /// Posição do cursor na linha (0 a `pieces.length`).
+  final int caret;
 
   /// A placa atual já foi resolvida (aguardando "Próxima placa").
   final bool solved;
@@ -101,26 +105,34 @@ class GameState {
 
   bool get hasOperators => pieces.any((p) => p is OpPiece);
 
+  /// A tecla ⌫ tem o que apagar.
+  bool get canDeleteBeforeCaret => canDeleteBefore(pieces, caret);
+
   GameState copyWith({
     Level? level,
     String? Function()? plate,
     List<Piece>? pieces,
+    int? caret,
     bool? solved,
     bool? exhausted,
     GameFeedback? Function()? feedback,
     int? errorTick,
     int? score,
-  }) =>
-      GameState(
-        level: level ?? this.level,
-        plate: plate != null ? plate() : this.plate,
-        pieces: pieces ?? this.pieces,
-        solved: solved ?? this.solved,
-        exhausted: exhausted ?? this.exhausted,
-        feedback: feedback != null ? feedback() : this.feedback,
-        errorTick: errorTick ?? this.errorTick,
-        score: score ?? this.score,
-      );
+  }) {
+    final line = pieces ?? this.pieces;
+    return GameState(
+      level: level ?? this.level,
+      plate: plate != null ? plate() : this.plate,
+      pieces: line,
+      // Linha nova sem cursor informado: o cursor volta ao início.
+      caret: clampCaret(caret ?? (pieces == null ? this.caret : 0), line),
+      solved: solved ?? this.solved,
+      exhausted: exhausted ?? this.exhausted,
+      feedback: feedback != null ? feedback() : this.feedback,
+      errorTick: errorTick ?? this.errorTick,
+      score: score ?? this.score,
+    );
+  }
 }
 
 /// Regras e estado do jogo. O estado é salvo em SharedPreferences (por
@@ -275,10 +287,18 @@ class GameController extends Notifier<GameState> implements LineEditor {
   @override
   void insertAt(int gap, Tok tok) {
     if (_locked || !state.level.allows(tok)) return;
-    final pieces = insertInLine(state.pieces, gap, OpPiece(_id(), tok));
-    _update(state.copyWith(pieces: pieces, feedback: () => null));
+    final at = gap.clamp(0, state.pieces.length);
+    final pieces = insertInLine(state.pieces, at, OpPiece(_id(), tok));
+    _update(state.copyWith(
+      pieces: pieces,
+      caret: at + 1,
+      feedback: () => null,
+    ));
     ref.read(soundServiceProvider).play(SoundEffect.tap);
   }
+
+  @override
+  void insertAtCaret(Tok tok) => insertAt(state.caret, tok);
 
   /// Move um operador ou o sinal de igual que já está na linha para a posição
   /// [gap], contada na linha antes da remoção. Os dígitos nunca se movem.
@@ -287,7 +307,11 @@ class GameController extends Notifier<GameState> implements LineEditor {
     if (_locked) return;
     final pieces = moveInLine(state.pieces, id, gap);
     if (pieces == null) return;
-    _update(state.copyWith(pieces: pieces, feedback: () => null));
+    _update(state.copyWith(
+      pieces: pieces,
+      caret: caretAfter(pieces, id),
+      feedback: () => null,
+    ));
     ref.read(soundServiceProvider).play(SoundEffect.tap);
   }
 
@@ -296,9 +320,28 @@ class GameController extends Notifier<GameState> implements LineEditor {
   @override
   void removePiece(int id) {
     if (_locked) return;
+    final index = state.pieces.indexWhere((p) => p.id == id);
     final pieces = removeFromLine(state.pieces, id);
     if (pieces == null) return;
-    _update(state.copyWith(pieces: pieces, feedback: () => null));
+    _update(state.copyWith(
+      pieces: pieces,
+      caret: caretAfterRemoval(state.caret, index),
+      feedback: () => null,
+    ));
+  }
+
+  @override
+  void setCaret(int gap) {
+    if (_locked) return;
+    final caret = clampCaret(gap, state.pieces);
+    if (caret == state.caret) return;
+    state = state.copyWith(caret: caret);
+  }
+
+  @override
+  void deleteBeforeCaret() {
+    if (_locked || !state.canDeleteBeforeCaret) return;
+    removePiece(state.pieces[state.caret - 1].id);
   }
 
   /// Devolve todos os operadores, mantendo a placa.
@@ -438,13 +481,11 @@ class GameController extends Notifier<GameState> implements LineEditor {
         Solver(level).isSolvable(digitsOf(plate));
     if (keep) {
       // A placa continua valendo; só saem os operadores não permitidos.
-      final pieces = [
-        for (final p in state.pieces)
-          if (p is! OpPiece || level.allows(p.tok)) p,
-      ];
+      bool keep(Piece p) => p is! OpPiece || level.allows(p.tok);
       _update(state.copyWith(
         level: level,
-        pieces: pieces,
+        pieces: state.pieces.where(keep).toList(),
+        caret: caretAfterFilter(state.pieces, state.caret, keep),
         feedback: () => null,
       ));
     } else if (_specific) {

@@ -217,7 +217,7 @@ abstract class AppLocalizations {
   /// No description provided for @editHint.
   ///
   /// In pt, this message translates to:
-  /// **'Arraste um operador até a linha de dígitos para montar a equação.'**
+  /// **'Toque entre as peças para pôr o cursor e toque num operador para inseri-lo ali (ou arraste o operador até a linha).'**
   String get editHint;
 
   /// No description provided for @verify.
@@ -244,11 +244,11 @@ abstract class AppLocalizations {
   /// **'Limpar'**
   String get clear;
 
-  /// No description provided for @addToEnd.
+  /// No description provided for @deleteOperator.
   ///
   /// In pt, this message translates to:
-  /// **'Adicionar ao fim da equação'**
-  String get addToEnd;
+  /// **'Apagar'**
+  String get deleteOperator;
 
   /// No description provided for @moveLeft.
   ///
@@ -673,7 +673,7 @@ abstract class AppLocalizations {
   /// No description provided for @helpHow.
   ///
   /// In pt, this message translates to:
-  /// **'Arraste um operador do teclado até a linha de dígitos e solte-o entre duas peças. Arraste o sinal de = para mudá-lo de lugar. Para tirar um operador, arraste-o para fora da linha ou toque nele: ele volta voando para o teclado.'**
+  /// **'Toque numa peça da linha para pôr o cursor (a barra colorida) do lado tocado e toque num operador do teclado para inseri-lo ali; o cursor avança, então dá para inserir vários seguidos. ⌫ Apagar tira o operador à esquerda do cursor e Limpar tira todos. Também dá para arrastar: solte um operador entre duas peças, arraste o sinal de = para mudá-lo de lugar ou arraste um operador para fora da linha para tirá-lo.'**
   String get helpHow;
 
   /// No description provided for @helpScaleTitle.
@@ -727,7 +727,7 @@ abstract class AppLocalizations {
   /// No description provided for @helpKeyboard.
   ///
   /// In pt, this message translates to:
-  /// **'No computador, a tecla Enter verifica a equação (e avança para a próxima placa depois de acertar).'**
+  /// **'No computador, digite os operadores: + - * (ou x) / ( ) ! ^ (potência) | (módulo), r (√), c (∛), [ ] (base) e chaves (teto). Backspace apaga, as setas movem o cursor e Enter verifica a equação (e avança para a próxima placa depois de acertar).'**
   String get helpKeyboard;
 
   /// No description provided for @opSqrt.

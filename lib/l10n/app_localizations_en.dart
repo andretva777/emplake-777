@@ -77,7 +77,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get editHint =>
-      'Drag an operator onto the row of digits to build the equation.';
+      'Tap between the pieces to place the cursor, then tap an operator to insert it there (or drag the operator onto the row).';
 
   @override
   String get verify => 'Check';
@@ -92,7 +92,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clear => 'Clear';
 
   @override
-  String get addToEnd => 'Add to the end of the equation';
+  String get deleteOperator => 'Delete';
 
   @override
   String get moveLeft => 'Move left';
@@ -329,7 +329,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get helpHow =>
-      'Drag an operator from the keypad onto the row of digits and drop it between two pieces. Drag the = sign to move it. To take an operator out, drag it off the row or tap it: it flies back to the keypad.';
+      'Tap a piece of the row to put the cursor (the coloured bar) on the side you tapped, then tap an operator on the keypad to insert it there; the cursor moves on, so you can insert several in a row. ⌫ Delete removes the operator to the left of the cursor and Clear removes them all. You can also drag: drop an operator between two pieces, drag the = sign to move it, or drag an operator off the row to take it out.';
 
   @override
   String get helpScaleTitle => 'The scale';
@@ -360,7 +360,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get helpKeyboard =>
-      'On a computer, the Enter key checks the equation (and moves on to the next plate after a correct answer).';
+      'On a computer, type the operators: + - * (or x) / ( ) ! ^ (power) | (absolute value), r (√), c (∛), [ ] (floor) and braces (ceiling). Backspace deletes, the arrow keys move the cursor and Enter checks the equation (and moves on to the next plate after a correct answer).';
 
   @override
   String get opSqrt => 'square root';

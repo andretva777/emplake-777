@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
 
 import '../../game/tokens.dart';
 import '../../l10n/app_localizations.dart';
@@ -8,7 +7,8 @@ import '../l10n_extensions.dart';
 import 'board_keys.dart';
 import 'drag_payload.dart';
 
-/// Teclado de operadores. Cada tecla é arrastada até a linha da equação; o
+/// Teclado de operadores. Tocar numa tecla insere o operador na posição do
+/// cursor; a tecla também pode ser arrastada até a linha da equação. O
 /// teclado nunca se esgota (dá para usar o mesmo operador mais de uma vez).
 /// No modo aventura, algumas teclas ficam bloqueadas até serem compradas.
 class OperatorTray extends StatelessWidget {
@@ -18,7 +18,9 @@ class OperatorTray extends StatelessWidget {
     required this.keys,
     required this.enabled,
     required this.canClear,
-    required this.onAddToEnd,
+    required this.canDelete,
+    required this.onInsert,
+    required this.onDelete,
     required this.onClear,
     this.locked = const {},
     this.onLockedTap,
@@ -35,13 +37,21 @@ class OperatorTray extends StatelessWidget {
   final bool enabled;
   final bool canClear;
 
-  /// Alternativa ao arrasto para leitores de tela: acrescenta o operador ao
-  /// fim da equação.
-  final ValueChanged<Tok> onAddToEnd;
+  /// Há um operador logo à esquerda do cursor para a tecla ⌫ apagar.
+  final bool canDelete;
+
+  /// Toque numa tecla: insere o operador no cursor.
+  final ValueChanged<Tok> onInsert;
+
+  /// Tecla ⌫: apaga o operador à esquerda do cursor.
+  final VoidCallback onDelete;
   final VoidCallback onClear;
 
   /// Chave local da tecla de um operador (para localizá-la nos testes).
   static Key valueKeyFor(Tok tok) => ValueKey('op-${tok.name}');
+
+  /// Chave da tecla ⌫.
+  static const deleteKey = ValueKey('op-delete');
 
   @override
   Widget build(BuildContext context) {
@@ -88,19 +98,28 @@ class OperatorTray extends StatelessWidget {
                   globalKey: keys.operator(tok),
                   tok: tok,
                   name: l10n.operatorName(tok) ?? tok.symbol,
-                  addToEndLabel: l10n.addToEnd,
                   enabled: enabled,
-                  onAddToEnd: () => onAddToEnd(tok),
+                  onInsert: () => onInsert(tok),
                 ),
           ],
         ),
         const SizedBox(height: 8),
-        Center(
-          child: TextButton.icon(
-            onPressed: enabled && canClear ? onClear : null,
-            icon: const Icon(Icons.replay_rounded),
-            label: Text(l10n.clear),
-          ),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 8,
+          children: [
+            TextButton.icon(
+              key: deleteKey,
+              onPressed: enabled && canDelete ? onDelete : null,
+              icon: const Icon(Icons.backspace_outlined),
+              label: Text(l10n.deleteOperator),
+            ),
+            TextButton.icon(
+              onPressed: enabled && canClear ? onClear : null,
+              icon: const Icon(Icons.replay_rounded),
+              label: Text(l10n.clear),
+            ),
+          ],
         ),
       ],
     );
@@ -113,23 +132,21 @@ class _OperatorKey extends StatelessWidget {
     required this.globalKey,
     required this.tok,
     required this.name,
-    required this.addToEndLabel,
     required this.enabled,
-    required this.onAddToEnd,
+    required this.onInsert,
   });
 
   final GlobalKey globalKey;
   final Tok tok;
   final String name;
-  final String addToEndLabel;
   final bool enabled;
-  final VoidCallback onAddToEnd;
+  final VoidCallback onInsert;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    Widget face({double opacity = 1}) => Opacity(
+    Widget face({double opacity = 1, VoidCallback? onTap}) => Opacity(
       opacity: opacity,
       child: Container(
         width: kDragFeedbackSize.width,
@@ -147,29 +164,40 @@ class _OperatorKey extends StatelessWidget {
                 ]
               : null,
         ),
-        alignment: Alignment.center,
-        child: Text(
-          tok.symbol,
-          textScaler: TextScaler.noScaling,
-          style: mathStyle(
-            context,
-            size: 22,
-            color: scheme.onSecondaryContainer,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(14),
+            // O teclado do computador é tratado pelo tabuleiro.
+            canRequestFocus: false,
+            child: Center(
+              child: Text(
+                tok.symbol,
+                textScaler: TextScaler.noScaling,
+                style: mathStyle(
+                  context,
+                  size: 22,
+                  color: scheme.onSecondaryContainer,
+                ),
+              ),
+            ),
           ),
         ),
       ),
     );
 
+    // Toque insere no cursor; arrastar solta onde o jogador quiser.
     final Widget key = enabled
         ? MouseRegion(
-            cursor: SystemMouseCursors.grab,
+            cursor: SystemMouseCursors.click,
             child: Draggable<DragPayload>(
               data: DragPayload.fromKeypad(tok),
               maxSimultaneousDrags: 1,
               dragAnchorStrategy: (_, _, _) => kDragAnchor,
               feedback: DragFeedback(payload: DragPayload.fromKeypad(tok)),
               childWhenDragging: face(opacity: 0.35),
-              child: face(),
+              child: face(onTap: onInsert),
             ),
           )
         : face(opacity: 0.4);
@@ -178,12 +206,11 @@ class _OperatorKey extends StatelessWidget {
       key: globalKey,
       message: name,
       child: Semantics(
+        button: true,
         label: name,
         enabled: enabled,
         excludeSemantics: true,
-        customSemanticsActions: enabled
-            ? {CustomSemanticsAction(label: addToEndLabel): onAddToEnd}
-            : null,
+        onTap: enabled ? onInsert : null,
         child: key,
       ),
     );

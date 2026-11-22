@@ -192,6 +192,9 @@ class _AdventureBoardState extends ConsumerState<_AdventureBoard>
   List<Piece> get currentPieces => ref.read(adventureProvider).pieces;
 
   @override
+  int get currentCaret => ref.read(adventureProvider).caret;
+
+  @override
   void initState() {
     super.initState();
     // O relógio para quando a aba do navegador ou o app ficam escondidos.
@@ -323,12 +326,12 @@ class _AdventureBoardState extends ConsumerState<_AdventureBoard>
   }
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
-    if (event is! KeyDownEvent) return KeyEventResult.ignored;
     final key = event.logicalKey;
     if (key != LogicalKeyboardKey.enter &&
         key != LogicalKeyboardKey.numpadEnter) {
-      return KeyEventResult.ignored;
+      return handleEditingKey(event);
     }
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
     ref.read(adventureProvider).solved ? _next() : _adventure.check();
     return KeyEventResult.handled;
   }
@@ -364,6 +367,7 @@ class _AdventureBoardState extends ConsumerState<_AdventureBoard>
             const SizedBox(height: 12),
             EquationCard(
               pieces: state.pieces,
+              caret: state.caret,
               keys: boardKeys,
               latex: state.latex,
               locked: !enabled,
@@ -372,7 +376,8 @@ class _AdventureBoardState extends ConsumerState<_AdventureBoard>
               errorTick: state.errorTick,
               onDrop: dropPiece,
               onCancel: dropOutside,
-              onRemove: tapRemove,
+              onRemove: removeWithFlight,
+              onCaret: _adventure.setCaret,
             ),
             const SizedBox(height: 10),
             FeedbackBanner(
@@ -395,8 +400,9 @@ class _AdventureBoardState extends ConsumerState<_AdventureBoard>
               onLockedTap: _buy,
               enabled: enabled,
               canClear: state.hasOperators,
-              onAddToEnd: (tok) =>
-                  _adventure.insertAt(state.pieces.length, tok),
+              canDelete: state.canDeleteBeforeCaret,
+              onInsert: _adventure.insertAtCaret,
+              onDelete: deleteBeforeCaret,
               onClear: _clear,
             ),
             const SizedBox(height: 16),

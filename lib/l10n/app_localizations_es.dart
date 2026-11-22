@@ -77,7 +77,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get editHint =>
-      'Arrastra un operador hasta la fila de dígitos para armar la ecuación.';
+      'Toca entre las piezas para poner el cursor y toca un operador para insertarlo allí (o arrastra el operador hasta la fila).';
 
   @override
   String get verify => 'Comprobar';
@@ -92,7 +92,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get clear => 'Limpiar';
 
   @override
-  String get addToEnd => 'Añadir al final de la ecuación';
+  String get deleteOperator => 'Borrar';
 
   @override
   String get moveLeft => 'Mover a la izquierda';
@@ -329,7 +329,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get helpHow =>
-      'Arrastra un operador del teclado hasta la fila de dígitos y suéltalo entre dos piezas. Arrastra el signo = para cambiarlo de sitio. Para quitar un operador, arrástralo fuera de la fila o tócalo: vuelve volando al teclado.';
+      'Toca una pieza de la fila para poner el cursor (la barra de color) del lado que tocaste y toca un operador del teclado para insertarlo allí; el cursor avanza, así que puedes insertar varios seguidos. ⌫ Borrar quita el operador a la izquierda del cursor y Limpiar los quita todos. También puedes arrastrar: suelta un operador entre dos piezas, arrastra el signo = para cambiarlo de sitio o arrastra un operador fuera de la fila para quitarlo.';
 
   @override
   String get helpScaleTitle => 'La balanza';
@@ -360,7 +360,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get helpKeyboard =>
-      'En el ordenador, la tecla Intro comprueba la ecuación (y pasa a la siguiente placa tras acertar).';
+      'En el ordenador, escribe los operadores: + - * (o x) / ( ) ! ^ (potencia) | (valor absoluto), r (√), c (∛), [ ] (piso) y llaves (techo). Retroceso borra, las flechas mueven el cursor e Intro comprueba la ecuación (y pasa a la siguiente placa tras acertar).';
 
   @override
   String get opSqrt => 'raíz cuadrada';

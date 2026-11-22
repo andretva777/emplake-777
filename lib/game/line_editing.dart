@@ -4,16 +4,49 @@ import 'tokens.dart';
 /// Todas devolvem uma nova lista (ou `null` quando nada muda).
 
 /// Quem edita uma linha de equação (os controladores de cada modo).
+///
+/// A linha tem um cursor (uma posição de 0 a `pieces.length`): tocar numa
+/// tecla insere o operador nele e o cursor avança, como num editor de texto.
 abstract interface class LineEditor {
-  /// Solta um operador novo na posição [gap] (0 a `pieces.length`).
+  /// Solta um operador novo na posição [gap] (0 a `pieces.length`). O
+  /// cursor vai para logo depois dele.
   void insertAt(int gap, Tok tok);
+
+  /// Insere um operador na posição do cursor.
+  void insertAtCaret(Tok tok);
 
   /// Move um operador ou o `=` para a posição [gap].
   void movePiece(int id, int gap);
 
   /// Tira um operador da linha.
   void removePiece(int id);
+
+  /// Põe o cursor na posição [gap].
+  void setCaret(int gap);
+
+  /// Apaga o operador logo à esquerda do cursor (tecla ⌫).
+  void deleteBeforeCaret();
 }
+
+/// Cursor dentro dos limites da linha.
+int clampCaret(int caret, List<Piece> line) => caret.clamp(0, line.length);
+
+/// Há um operador logo à esquerda do cursor (que a tecla ⌫ apagaria).
+bool canDeleteBefore(List<Piece> line, int caret) =>
+    caret > 0 && caret <= line.length && line[caret - 1] is OpPiece;
+
+/// Posição do cursor depois que a peça em [index] sai da linha.
+int caretAfterRemoval(int caret, int index) =>
+    caret > index ? caret - 1 : caret;
+
+/// Posição do cursor logo depois da peça [id] (que acabou de ser movida).
+int caretAfter(List<Piece> line, int id) =>
+    line.indexWhere((p) => p.id == id) + 1;
+
+/// Posição do cursor quando as peças fora de [keep] saem da linha: ele fica
+/// entre as mesmas peças de antes.
+int caretAfterFilter(List<Piece> line, int caret, bool Function(Piece) keep) =>
+    line.take(clampCaret(caret, line)).where(keep).length;
 
 /// Linha inicial: os quatro dígitos com o `=` já no meio.
 List<Piece> initialLine(String plate, int Function() nextId) => [

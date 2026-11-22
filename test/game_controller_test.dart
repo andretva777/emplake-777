@@ -256,6 +256,72 @@ void main() {
     expect(c.read(gameProvider).plate, isNull);
   });
 
+  test('cursor: insere, avança, apaga e acompanha as edições', () async {
+    final (c, _) = await setUpGame(
+      prefs: {'game.demo': savedGame('8131', '81=31')},
+    );
+    final game = c.read(gameProvider.notifier);
+    await game.ensureReady();
+    GameState s() => c.read(gameProvider);
+    expect(s().caret, 0);
+
+    game.setCaret(1);
+    game.insertAtCaret(Tok.plus);
+    expect(line(s()), '8+1=31');
+    expect(s().caret, 2);
+    game.insertAtCaret(Tok.lparen);
+    expect(line(s()), '8+(1=31');
+    expect(s().caret, 3);
+
+    // ⌫ só apaga operador; à esquerda do cursor está o "(".
+    expect(s().canDeleteBeforeCaret, isTrue);
+    game.deleteBeforeCaret();
+    expect(line(s()), '8+1=31');
+    expect(s().caret, 2);
+    game.setCaret(1); // à esquerda: o 8
+    expect(s().canDeleteBeforeCaret, isFalse);
+    game.deleteBeforeCaret();
+    expect(line(s()), '8+1=31');
+
+    // Cursor fora da linha é limitado às pontas.
+    game.setCaret(-3);
+    expect(s().caret, 0);
+    game.setCaret(99);
+    expect(s().caret, s().pieces.length);
+
+    // Soltar uma peça arrastada põe o cursor logo depois dela.
+    game.insertAt(0, Tok.minus);
+    expect(line(s()), '-8+1=31');
+    expect(s().caret, 1);
+
+    // Remover uma peça antes do cursor o puxa uma posição para trás.
+    game.setCaret(4); // depois do 1
+    final plus = s().pieces[2];
+    game.removePiece(plus.id);
+    expect(line(s()), '-81=31');
+    expect(s().caret, 3);
+
+    // Mover uma peça põe o cursor depois dela.
+    final eq = s().pieces.firstWhere((p) => p is EqualsPiece);
+    game.movePiece(eq.id, 2); // -8=1 31
+    expect(line(s()), '-8=131');
+    expect(s().caret, 3);
+
+    // Trocar de nível tira operadores proibidos e o cursor fica entre as
+    // mesmas peças (8131 tem solução no avançado: √(8+1) = 3*1).
+    game.setCaret(4); // -8=1|31
+    game.insertAtCaret(Tok.pow); // -8=1^31
+    expect(s().caret, 5);
+    game.setLevel(Level.advanced);
+    expect(s().plate, '8131');
+    expect(line(s()), '-8=131');
+    expect(s().caret, 4);
+
+    // Limpar devolve o cursor ao começo.
+    game.clear();
+    expect(s().caret, 0);
+  });
+
   test('cada modo guarda a sua partida', () async {
     final (c, _) = await setUpGame(
       prefs: {'game.demo': savedGame('8131', '81=31')},

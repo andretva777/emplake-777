@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -162,6 +163,7 @@ class EquationCard extends StatelessWidget {
   const EquationCard({
     super.key,
     required this.pieces,
+    required this.caret,
     required this.keys,
     required this.latex,
     required this.locked,
@@ -171,9 +173,11 @@ class EquationCard extends StatelessWidget {
     required this.onDrop,
     required this.onCancel,
     required this.onRemove,
+    required this.onCaret,
   });
 
   final List<Piece> pieces;
+  final int caret;
   final BoardKeys keys;
   final String latex;
   final bool locked;
@@ -183,6 +187,7 @@ class EquationCard extends StatelessWidget {
   final void Function(DragPayload payload, int gap) onDrop;
   final void Function(DragPayload payload, Offset pointer) onCancel;
   final ValueChanged<int> onRemove;
+  final ValueChanged<int> onCaret;
 
   @override
   Widget build(BuildContext context) {
@@ -196,6 +201,7 @@ class EquationCard extends StatelessWidget {
             children: [
               EquationLine(
                 pieces: pieces,
+                caret: caret,
                 keys: keys,
                 locked: locked,
                 solved: solved,
@@ -203,6 +209,7 @@ class EquationCard extends StatelessWidget {
                 onDrop: onDrop,
                 onCancel: onCancel,
                 onRemove: onRemove,
+                onCaret: onCaret,
               ),
               const SizedBox(height: 10),
               const Divider(height: 1),
@@ -731,6 +738,9 @@ mixin BoardInteractions<W extends ConsumerStatefulWidget> on ConsumerState<W> {
   /// Linha atual (lida no momento do gesto).
   List<Piece> get currentPieces;
 
+  /// Posição atual do cursor.
+  int get currentCaret;
+
   SoundService get _sounds => ref.read(soundServiceProvider);
 
   /// Todos os operadores voltam para o teclado. Deve ser chamado antes de o
@@ -759,12 +769,57 @@ mixin BoardInteractions<W extends ConsumerStatefulWidget> on ConsumerState<W> {
     if (id != null) editor.removePiece(id);
   }
 
-  /// Toque em um operador da linha: ele volta voando para o teclado.
-  void tapRemove(int id) {
+  /// Tira um operador da linha: ele volta voando para o teclado.
+  void removeWithFlight(int id) {
     final piece = currentPieces.where((p) => p.id == id).firstOrNull;
     if (piece is! OpPiece) return;
     OperatorFlights.allHome(context, boardKeys, _sounds, [piece]);
     editor.removePiece(id);
+  }
+
+  /// Tecla ⌫: o operador à esquerda do cursor volta para o teclado.
+  void deleteBeforeCaret() {
+    final pieces = currentPieces;
+    final caret = currentCaret;
+    if (!canDeleteBefore(pieces, caret)) return;
+    removeWithFlight(pieces[caret - 1].id);
+  }
+
+  /// Teclado do computador: os símbolos dos operadores (`+ - * / ( ) ! ^ |`,
+  /// `x` para ×, `r` para √, `c` para ∛, `[ ] { }` para base e teto) entram
+  /// no cursor; ⌫ apaga; as setas, Home e End movem o cursor.
+  KeyEventResult handleEditingKey(KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    final keyboard = HardwareKeyboard.instance;
+    // Atalhos do navegador (Ctrl+C, Ctrl+R...) não são operadores.
+    if (keyboard.isControlPressed ||
+        keyboard.isMetaPressed ||
+        keyboard.isAltPressed) {
+      return KeyEventResult.ignored;
+    }
+    final key = event.logicalKey;
+    final caret = currentCaret;
+    if (key == LogicalKeyboardKey.backspace) {
+      deleteBeforeCaret();
+    } else if (key == LogicalKeyboardKey.arrowLeft) {
+      editor.setCaret(caret - 1);
+    } else if (key == LogicalKeyboardKey.arrowRight) {
+      editor.setCaret(caret + 1);
+    } else if (key == LogicalKeyboardKey.home) {
+      editor.setCaret(0);
+    } else if (key == LogicalKeyboardKey.end) {
+      editor.setCaret(currentPieces.length);
+    } else {
+      final ch = event.character;
+      final tok = ch == null
+          ? null
+          : Tok.fromCode(ch == 'x' || ch == 'X' ? '*' : ch);
+      if (tok == null) return KeyEventResult.ignored;
+      editor.insertAtCaret(tok);
+    }
+    return KeyEventResult.handled;
   }
 }
 

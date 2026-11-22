@@ -33,6 +33,8 @@ Future<(ProviderContainer, FakeProgressRepository)> setUp({
   return (container, repository);
 }
 
+String lineOf(List<Piece> pieces) => encodeLine(pieces);
+
 /// Aventura salva no meio de uma placa.
 String saved({
   String plate = '2222',
@@ -128,6 +130,30 @@ void main() {
     final game = c.read(gameProvider.notifier);
     expect(game.wasSolved('2222'), isTrue);
     expect(c.read(gameProvider).score, Level.hard.points);
+  });
+
+  test('cursor: insere no cursor, avança e apaga só operadores', () async {
+    final (c, _) = await setUp(prefs: {'adventure.demo': saved()});
+    final adventure = c.read(adventureProvider.notifier);
+    AdventureState s() => c.read(adventureProvider);
+    expect(s().caret, 0);
+    adventure.setCaret(1);
+    adventure.insertAtCaret(Tok.plus);
+    adventure.insertAtCaret(Tok.lparen);
+    expect(lineOf(s().pieces), '2+(2=22');
+    expect(s().caret, 3);
+    // Operador bloqueado não entra nem move o cursor.
+    adventure.insertAtCaret(Tok.sqrt);
+    expect(lineOf(s().pieces), '2+(2=22');
+    expect(s().caret, 3);
+    adventure.deleteBeforeCaret();
+    adventure.deleteBeforeCaret();
+    expect(lineOf(s().pieces), '22=22');
+    expect(s().caret, 1);
+    adventure.deleteBeforeCaret(); // à esquerda: o dígito 2
+    expect(lineOf(s().pieces), '22=22');
+    adventure.clear();
+    expect(s().caret, 0);
   });
 
   test('placa resolvida em outro modo não pontua de novo na aventura',

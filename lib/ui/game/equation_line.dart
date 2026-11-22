@@ -11,13 +11,16 @@ import 'drag_payload.dart';
 /// Linha em que a equação é montada: os quatro dígitos fixos, o sinal de
 /// igual e os operadores soltos pelo jogador.
 ///
-/// Operadores (do teclado ou da própria linha) e o `=` são arrastados e
-/// soltos entre duas peças; uma marca mostra onde a peça vai entrar. Soltar
-/// fora da linha devolve o operador ao teclado; tocar num operador também.
+/// A linha tem um cursor (uma barra entre duas peças): tocar numa peça põe o
+/// cursor do lado tocado, e as teclas do teclado inserem o operador ali.
+/// Operadores (do teclado ou da própria linha) e o `=` também podem ser
+/// arrastados e soltos entre duas peças; uma marca mostra onde a peça vai
+/// entrar. Soltar um operador fora da linha o devolve ao teclado.
 class EquationLine extends StatefulWidget {
   const EquationLine({
     super.key,
     required this.pieces,
+    required this.caret,
     required this.keys,
     required this.locked,
     required this.solved,
@@ -25,9 +28,13 @@ class EquationLine extends StatefulWidget {
     required this.onDrop,
     required this.onCancel,
     required this.onRemove,
+    required this.onCaret,
   });
 
   final List<Piece> pieces;
+
+  /// Posição do cursor (0 a `pieces.length`).
+  final int caret;
 
   /// Chaves das peças (origem da animação de retorno).
   final BoardKeys keys;
@@ -45,8 +52,11 @@ class EquationLine extends StatefulWidget {
   /// Um arrasto terminou fora da linha; [pointer] é a posição global.
   final void Function(DragPayload payload, Offset pointer) onCancel;
 
-  /// Toque em um operador da linha.
+  /// Remove um operador da linha (ação de acessibilidade).
   final ValueChanged<int> onRemove;
+
+  /// Toque na linha: o cursor vai para a posição indicada.
+  final ValueChanged<int> onCaret;
 
   /// Chave local da peça na linha (para localizá-la nos testes).
   static Key valueKeyFor(Piece piece) => ValueKey(('piece', piece.id));
@@ -112,12 +122,16 @@ class _EquationLineState extends State<EquationLine> {
             locked: widget.locked,
             gapBefore: _hoverGap == i,
             gapAfter: i == last && _hoverGap == pieces.length,
+            caretBefore: !widget.locked && widget.caret == i,
+            caretAfter:
+                !widget.locked && i == last && widget.caret == pieces.length,
             isLast: i == last,
             l10n: l10n,
             onHover: (gap) => _hover(i, gap),
             onLeave: () => _leave(i),
             onDrop: _drop,
             onCancel: widget.onCancel,
+            onCaret: widget.onCaret,
             onRemove: piece is OpPiece ? () => widget.onRemove(piece.id) : null,
             onShift: piece is DigitPiece
                 ? null
@@ -151,12 +165,15 @@ class _Slot extends StatelessWidget {
     required this.locked,
     required this.gapBefore,
     required this.gapAfter,
+    required this.caretBefore,
+    required this.caretAfter,
     required this.isLast,
     required this.l10n,
     required this.onHover,
     required this.onLeave,
     required this.onDrop,
     required this.onCancel,
+    required this.onCaret,
     required this.onRemove,
     required this.onShift,
     required this.canShiftLeft,
@@ -171,12 +188,17 @@ class _Slot extends StatelessWidget {
   final bool locked;
   final bool gapBefore;
   final bool gapAfter;
+
+  /// O cursor está antes desta peça (ou depois, na última).
+  final bool caretBefore;
+  final bool caretAfter;
   final bool isLast;
   final AppLocalizations l10n;
   final ValueChanged<int> onHover;
   final VoidCallback onLeave;
   final void Function(DragPayload payload, int gap) onDrop;
   final void Function(DragPayload payload, Offset pointer) onCancel;
+  final ValueChanged<int> onCaret;
   final VoidCallback? onRemove;
   final ValueChanged<int>? onShift;
   final bool canShiftLeft;
@@ -208,13 +230,23 @@ class _Slot extends StatelessWidget {
     Widget content = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _Gap(active: gapBefore, unit: unit),
+        _Gap(active: gapBefore, caret: caretBefore, unit: unit),
         _draggable(context, tile),
-        if (isLast) _Gap(active: gapAfter, unit: unit),
+        if (isLast) _Gap(active: gapAfter, caret: caretAfter, unit: unit),
       ],
     );
 
     if (!locked) {
+      // Tocar põe o cursor do lado tocado da peça.
+      content = MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapUp: (details) =>
+              onCaret(_gapFor(context, details.globalPosition)),
+          child: content,
+        ),
+      );
       final inner = content;
       content = DragTarget<DragPayload>(
         onWillAcceptWithDetails: (details) {
@@ -236,6 +268,8 @@ class _Slot extends StatelessWidget {
     return Semantics(
       label: _spoken,
       excludeSemantics: true,
+      // Ativar a peça põe o cursor logo depois dela.
+      onTap: locked ? null : () => onCaret(index + 1),
       customSemanticsActions: locked
           ? null
           : {
@@ -258,31 +292,26 @@ class _Slot extends StatelessWidget {
     );
     return MouseRegion(
       cursor: SystemMouseCursors.grab,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onRemove,
-        onSecondaryTap: onRemove,
-        child: Draggable<DragPayload>(
-          data: payload,
-          maxSimultaneousDrags: 1,
-          dragAnchorStrategy: (_, _, _) => kDragAnchor,
-          feedback: DragFeedback(payload: payload),
-          childWhenDragging: Opacity(
-            opacity: 0.25,
-            child: _Tile(
-              piece: piece,
-              unit: unit,
-              solved: solved,
-              pop: false,
-            ),
+      child: Draggable<DragPayload>(
+        data: payload,
+        maxSimultaneousDrags: 1,
+        dragAnchorStrategy: (_, _, _) => kDragAnchor,
+        feedback: DragFeedback(payload: payload),
+        childWhenDragging: Opacity(
+          opacity: 0.25,
+          child: _Tile(
+            piece: piece,
+            unit: unit,
+            solved: solved,
+            pop: false,
           ),
-          onDragEnd: (details) {
-            if (!details.wasAccepted) {
-              onCancel(payload, pointerOf(details.offset));
-            }
-          },
-          child: tile,
         ),
+        onDragEnd: (details) {
+          if (!details.wasAccepted) {
+            onCancel(payload, pointerOf(details.offset));
+          }
+        },
+        child: tile,
       ),
     );
   }
@@ -390,26 +419,36 @@ class _Tile extends StatelessWidget {
 }
 
 /// Espaço entre peças. Ocupa sempre a mesma largura para que a linha não
-/// "pule" durante o arrasto; quando ativo, mostra onde a peça entraria.
+/// "pule" durante o arrasto; quando ativo, mostra onde a peça arrastada
+/// entraria. Também é onde o cursor aparece.
 class _Gap extends StatelessWidget {
-  const _Gap({required this.active, required this.unit});
+  const _Gap({required this.active, required this.caret, required this.unit});
 
+  /// Uma peça arrastada entraria aqui.
   final bool active;
+
+  /// O cursor está aqui.
+  final bool caret;
   final double unit;
+
+  /// Chave do cursor (para localizá-lo nos testes).
+  static const caretKey = ValueKey('caret');
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.tertiary;
+    final scheme = Theme.of(context).colorScheme;
+    final showCaret = caret && !active;
     return SizedBox(
       width: 10 * unit,
       height: 60 * unit,
       child: Center(
         child: AnimatedContainer(
+          key: showCaret ? caretKey : null,
           duration: const Duration(milliseconds: 120),
-          width: 4 * unit,
-          height: active ? 60 * unit : 0,
+          width: (showCaret ? 3 : 4) * unit,
+          height: active || showCaret ? 60 * unit : 0,
           decoration: BoxDecoration(
-            color: color,
+            color: active ? scheme.tertiary : scheme.primary,
             borderRadius: BorderRadius.circular(3),
           ),
         ),

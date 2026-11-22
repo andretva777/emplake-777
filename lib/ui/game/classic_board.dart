@@ -77,6 +77,9 @@ class _ClassicBoardState extends ConsumerState<_ClassicBoard>
   @override
   List<Piece> get currentPieces => ref.read(gameProvider).pieces;
 
+  @override
+  int get currentCaret => ref.read(gameProvider).caret;
+
   bool get _specific => ref.read(gameModeProvider) == GameMode.specific;
 
   @override
@@ -121,16 +124,17 @@ class _ClassicBoardState extends ConsumerState<_ClassicBoard>
     _game.setLevel(level);
   }
 
-  /// Enter verifica a equação (ou avança, depois de acertar).
+  /// Enter verifica a equação (ou avança, depois de acertar); as demais
+  /// teclas editam a linha.
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
-    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    final state = ref.read(gameProvider);
+    if (state.plate == null) return KeyEventResult.ignored;
     final key = event.logicalKey;
     if (key != LogicalKeyboardKey.enter &&
         key != LogicalKeyboardKey.numpadEnter) {
-      return KeyEventResult.ignored;
+      return handleEditingKey(event);
     }
-    final state = ref.read(gameProvider);
-    if (state.plate == null) return KeyEventResult.ignored;
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
     state.solved ? _next() : _game.check();
     return KeyEventResult.handled;
   }
@@ -202,6 +206,7 @@ class _ClassicBoardState extends ConsumerState<_ClassicBoard>
             const SizedBox(height: 12),
             EquationCard(
               pieces: state.pieces,
+              caret: state.caret,
               keys: boardKeys,
               latex: state.latex,
               locked: !enabled,
@@ -210,7 +215,8 @@ class _ClassicBoardState extends ConsumerState<_ClassicBoard>
               errorTick: state.errorTick,
               onDrop: dropPiece,
               onCancel: dropOutside,
-              onRemove: tapRemove,
+              onRemove: removeWithFlight,
+              onCaret: _game.setCaret,
             ),
             const SizedBox(height: 10),
             FeedbackBanner(
@@ -228,7 +234,9 @@ class _ClassicBoardState extends ConsumerState<_ClassicBoard>
               operators: state.level.operators,
               enabled: enabled,
               canClear: state.hasOperators,
-              onAddToEnd: (tok) => _game.insertAt(state.pieces.length, tok),
+              canDelete: state.canDeleteBeforeCaret,
+              onInsert: _game.insertAtCaret,
+              onDelete: deleteBeforeCaret,
               onClear: _clear,
             ),
             const SizedBox(height: 16),

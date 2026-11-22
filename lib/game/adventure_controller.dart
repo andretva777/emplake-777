@@ -93,6 +93,7 @@ class AdventureState {
     this.unlocked = const {},
     this.plate,
     this.pieces = const [],
+    this.caret = 0,
     this.elapsed = 0,
     this.solved = false,
     this.feedback,
@@ -109,6 +110,9 @@ class AdventureState {
   final Set<Tok> unlocked;
   final String? plate;
   final List<Piece> pieces;
+
+  /// Posição do cursor na linha (0 a `pieces.length`).
+  final int caret;
 
   /// Segundos gastos na placa atual (o prêmio cai com o tempo).
   final int elapsed;
@@ -128,6 +132,9 @@ class AdventureState {
   EquationResult get evaluation => evaluateEquation(pieces, rules);
   String get latex => equationToLatex(pieces);
   bool get hasOperators => pieces.any((p) => p is OpPiece);
+
+  /// A tecla ⌫ tem o que apagar.
+  bool get canDeleteBeforeCaret => canDeleteBefore(pieces, caret);
   int get reward => AdventureEconomy.rewardAfter(elapsed);
   bool get canSkip => !solved && money > AdventureEconomy.skipCost;
 
@@ -138,27 +145,32 @@ class AdventureState {
     Set<Tok>? unlocked,
     String? Function()? plate,
     List<Piece>? pieces,
+    int? caret,
     int? elapsed,
     bool? solved,
     GameFeedback? Function()? feedback,
     int? errorTick,
     int? best,
     bool? newRecord,
-  }) =>
-      AdventureState(
-        phase: phase ?? this.phase,
-        money: money ?? this.money,
-        solvedCount: solvedCount ?? this.solvedCount,
-        unlocked: unlocked ?? this.unlocked,
-        plate: plate != null ? plate() : this.plate,
-        pieces: pieces ?? this.pieces,
-        elapsed: elapsed ?? this.elapsed,
-        solved: solved ?? this.solved,
-        feedback: feedback != null ? feedback() : this.feedback,
-        errorTick: errorTick ?? this.errorTick,
-        best: best ?? this.best,
-        newRecord: newRecord ?? this.newRecord,
-      );
+  }) {
+    final line = pieces ?? this.pieces;
+    return AdventureState(
+      phase: phase ?? this.phase,
+      money: money ?? this.money,
+      solvedCount: solvedCount ?? this.solvedCount,
+      unlocked: unlocked ?? this.unlocked,
+      plate: plate != null ? plate() : this.plate,
+      pieces: line,
+      // Linha nova sem cursor informado: o cursor volta ao início.
+      caret: clampCaret(caret ?? (pieces == null ? this.caret : 0), line),
+      elapsed: elapsed ?? this.elapsed,
+      solved: solved ?? this.solved,
+      feedback: feedback != null ? feedback() : this.feedback,
+      errorTick: errorTick ?? this.errorTick,
+      best: best ?? this.best,
+      newRecord: newRecord ?? this.newRecord,
+    );
+  }
 }
 
 /// Modo aventura (sobrevivência): o jogador ganha moedas resolvendo placas,
@@ -357,34 +369,54 @@ class AdventureController extends Notifier<AdventureState>
   @override
   void insertAt(int gap, Tok tok) {
     if (_locked || !state.rules.allows(tok)) return;
-    _edit(insertInLine(state.pieces, gap, OpPiece(_id(), tok)));
+    final at = gap.clamp(0, state.pieces.length);
+    _edit(insertInLine(state.pieces, at, OpPiece(_id(), tok)), at + 1);
     ref.read(soundServiceProvider).play(SoundEffect.tap);
   }
+
+  @override
+  void insertAtCaret(Tok tok) => insertAt(state.caret, tok);
 
   @override
   void movePiece(int id, int gap) {
     if (_locked) return;
     final pieces = moveInLine(state.pieces, id, gap);
     if (pieces == null) return;
-    _edit(pieces);
+    _edit(pieces, caretAfter(pieces, id));
     ref.read(soundServiceProvider).play(SoundEffect.tap);
   }
 
   @override
   void removePiece(int id) {
     if (_locked) return;
+    final index = state.pieces.indexWhere((p) => p.id == id);
     final pieces = removeFromLine(state.pieces, id);
-    if (pieces != null) _edit(pieces);
+    if (pieces != null) _edit(pieces, caretAfterRemoval(state.caret, index));
+  }
+
+  @override
+  void setCaret(int gap) {
+    if (_locked) return;
+    final caret = clampCaret(gap, state.pieces);
+    if (caret == state.caret) return;
+    state = state.copyWith(caret: caret);
+  }
+
+  @override
+  void deleteBeforeCaret() {
+    if (_locked || !state.canDeleteBeforeCaret) return;
+    removePiece(state.pieces[state.caret - 1].id);
   }
 
   void clear() {
     final plate = state.plate;
     if (_locked || plate == null) return;
-    _edit(initialLine(plate, _id));
+    _edit(initialLine(plate, _id), 0);
   }
 
-  void _edit(List<Piece> pieces) =>
-      _update(state.copyWith(pieces: pieces, feedback: () => null));
+  void _edit(List<Piece> pieces, int caret) => _update(
+        state.copyWith(pieces: pieces, caret: caret, feedback: () => null),
+      );
 
   /// Compra um operador. Retorna `false` se o dinheiro não for suficiente.
   bool buy(Upgrade upgrade) {
