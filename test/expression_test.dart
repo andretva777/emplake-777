@@ -35,8 +35,55 @@ void main() {
     test('precedência e menos unário', () {
       expect(eval('2+3*4=7*2').isCorrect, isTrue); // 14 = 14
       expect(eval('-(2-5)=3').isCorrect, isTrue);
-      expect(eval('-2^2=-4').isCorrect, isTrue);
       expect(eval('2^-1=1/2').isCorrect, isTrue);
+    });
+
+    test('precedência do aplicativo original (exemplos do professor)', () {
+      expect(eval('1+2*3=7').isCorrect, isTrue);
+      expect(eval('2*3!=8+4').isCorrect, isTrue);
+      expect(eval('-2+2=0+0').isCorrect, isTrue);
+      expect(eval('--2+0!=3+0').isCorrect, isTrue);
+      expect(eval('-(-2+5)=4-7').isCorrect, isTrue);
+      // √ vale só para o número da frente: √8! = (√8)! (fatorial de não
+      // inteiro, a raiz não é truncada).
+      expect(eval('r8!+0=1+1').error?.kind, ExprErrorKind.invalidFactorial);
+      expect(eval('r9!=6').isCorrect, isTrue); // (√9)! = 3! = 6
+    });
+
+    test('o menos unário vale só para o operando seguinte', () {
+      expect(eval('-3^2=9').isCorrect, isTrue); // (-3)**2
+      expect(eval('-(3^2)=0-9').isCorrect, isTrue);
+      expect(eval('-2^3=0-8').isCorrect, isTrue); // (-2)**3
+      expect(eval('2^-1=1/2').isCorrect, isTrue);
+      expect(eval('2*-3=0-6').isCorrect, isTrue);
+      expect(eval('2--2=4').isCorrect, isTrue);
+      expect(eval('-r4=0-2').isCorrect, isTrue); // -(√4)
+      expect(eval('-|0-2|=0-2').isCorrect, isTrue);
+      // (-2)! não existe; -(2!) precisa de parênteses.
+      expect(eval('-2!=0-2').error?.kind, ExprErrorKind.invalidFactorial);
+      expect(eval('-(2!)=0-2').isCorrect, isTrue);
+    });
+
+    test('raiz seguida de menos unário', () {
+      expect(eval('c-8=0-2').isCorrect, isTrue); // ∛(-8)
+      expect(eval('r-(2-6)=2').isCorrect, isTrue); // √(-(2-6)) = √4
+      expect(eval('r-4=2').error?.kind, ExprErrorKind.negativeRoot);
+      expect(eval('r--4=2').isCorrect, isTrue);
+    });
+
+    test('expressões compostas do enunciado são aceitas pela sintaxe', () {
+      // Os exemplos não são igualdades verdadeiras; o que importa é que a
+      // estrutura é analisada (o erro, se houver, é de valor, não de sintaxe).
+      const syntax = {
+        ExprErrorKind.missingOperand,
+        ExprErrorKind.missingOperator,
+        ExprErrorKind.unbalanced,
+        ExprErrorKind.unexpected,
+      };
+      for (final s in ['--(c(-(3!-r(8))))+7!!=c(r(8!))', 'r(r(-(2-6)!!)!)=(r8)*1!']) {
+        final kind = eval(s).error?.kind;
+        expect(syntax.contains(kind), isFalse, reason: '$s -> $kind');
+      }
     });
 
     test('módulo, base e teto', () {
@@ -94,6 +141,11 @@ void main() {
         equationToLatex(pieces('|2-5|=3')),
         r'\left|2 - 5\right| = 3',
       );
+      // Base negativa de potência e de fatorial ganha parênteses.
+      expect(equationToLatex(pieces('-3^2=9')), r'{\left(-3\right)}^{2} = 9');
+      expect(equationToLatex(pieces('-(3^2)=9')), r'-\left({3}^{2}\right) = 9');
+      expect(equationToLatex(pieces('-3!=6')), r'\left(-3\right)! = 6');
+      expect(equationToLatex(pieces('c-8=2')), r'\sqrt[3]{-8} = 2');
       // Expressão incompleta não lança exceção.
       expect(equationToLatex(pieces('(1+=3')), isNotEmpty);
     });

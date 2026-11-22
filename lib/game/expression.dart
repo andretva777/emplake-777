@@ -79,6 +79,11 @@ sealed class Node {
 /// já delimita o conteúdo, como em `\sqrt{...}` ou `\frac{...}{...}`).
 String _bare(Node n) => n is Paren ? n.inner.latex() : n.latex();
 
+/// LaTeX de [n] como base de potência ou de fatorial: um número negativo
+/// ganha parênteses, senão `-3^{2}` e `-2!` seriam lidos como `-(3^2)` e
+/// `-(2!)`.
+String _base(Node n) => n is Neg ? '\\left(${n.latex()}\\right)' : n.latex();
+
 class Num extends Node {
   const Num(this.value);
   final int value;
@@ -165,7 +170,7 @@ class Bin extends Node {
         Tok.minus => '${left.latex()} - ${right.latex()}',
         Tok.times => '${left.latex()} \\times ${right.latex()}',
         Tok.divide => '\\frac{${_bare(left)}}{${_bare(right)}}',
-        Tok.pow => '{${left.latex()}}^{${_bare(right)}}',
+        Tok.pow => '{${_base(left)}}^{${_bare(right)}}',
         _ => '',
       };
 
@@ -213,7 +218,7 @@ class Unary extends Node {
   String latex() => switch (kind) {
         UnaryKind.sqrt => '\\sqrt{${_bare(inner)}}',
         UnaryKind.cbrt => '\\sqrt[3]{${_bare(inner)}}',
-        UnaryKind.fact => '${inner.latex()}!',
+        UnaryKind.fact => '${_base(inner)}!',
         UnaryKind.abs => '\\left|${inner.latex()}\\right|',
         UnaryKind.floor => '\\left\\lfloor ${inner.latex()}\\right\\rfloor',
         UnaryKind.ceil => '\\left\\lceil ${inner.latex()}\\right\\rceil',
@@ -227,13 +232,15 @@ class Unary extends Node {
 // Analisador sintático (descida recursiva)
 //
 //   expr     := term (('+' | '-') term)*
-//   term     := unary (('*' | '/') unary)*
-//   unary    := '-' unary | power
-//   power    := postfix ('**' unary)?            (associativo à direita)
+//   term     := power (('*' | '/') power)*
+//   power    := postfix ('**' power)?            (associativo à direita)
 //   postfix  := prefixed '!'*
-//   prefixed := ('√' | '∛') prefixed | primary
+//   prefixed := ('-' | '√' | '∛') prefixed | primary
 //   primary  := dígito | '(' expr ')' | '|' expr '|'
 //             | '⌊' expr '⌋' | '⌈' expr '⌉'
+//
+// O menos unário, a raiz e a raiz cúbica valem só para o operando logo à
+// frente (a menos de parênteses): -3**2 = (-3)**2, √8! = (√8)!, -2! = (-2)!.
 // ---------------------------------------------------------------------------
 
 class _Parser {
@@ -283,26 +290,21 @@ class _Parser {
   }
 
   Node term() {
-    var left = unary();
+    var left = power();
     while (true) {
       if (accept(Tok.times)) {
-        left = Bin(Tok.times, left, unary());
+        left = Bin(Tok.times, left, power());
       } else if (accept(Tok.divide)) {
-        left = Bin(Tok.divide, left, unary());
+        left = Bin(Tok.divide, left, power());
       } else {
         return left;
       }
     }
   }
 
-  Node unary() {
-    if (accept(Tok.minus)) return Neg(unary());
-    return power();
-  }
-
   Node power() {
     final base = postfix();
-    if (accept(Tok.pow)) return Bin(Tok.pow, base, unary());
+    if (accept(Tok.pow)) return Bin(Tok.pow, base, power());
     return base;
   }
 
@@ -315,6 +317,7 @@ class _Parser {
   }
 
   Node prefixed() {
+    if (accept(Tok.minus)) return Neg(prefixed());
     if (accept(Tok.sqrt)) return Unary(UnaryKind.sqrt, prefixed());
     if (accept(Tok.cbrt)) return Unary(UnaryKind.cbrt, prefixed());
     return primary();
