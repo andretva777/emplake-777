@@ -111,6 +111,8 @@
   "helpScale": "La balanza muestra el valor de cada lado. Cuando queda equilibrada, la igualdad es correcta: toca Comprobar para puntuar.",
   "helpRulesTitle": "Reglas",
   "helpRules": "Los dígitos no se pueden unir (1 y 2 no forman 12) y hay que usarlos todos. Solo el nivel Fácil acepta divisiones con resultado no entero.",
+  "helpOrderTitle": "Orden de las operaciones",
+  "helpOrder": "* y / se hacen antes que + y −. √, ∛ y el − delante de un número valen solo para el número (o paréntesis) que les sigue: −3**2 = (−3)**2 = 9 y √9! = (√9)! = 6. El ! vale solo para el número (o paréntesis) justo antes: 2*3! = 2*(3!) = 12. Usa paréntesis para cambiar el orden: −(3**2) = −9.",
   "helpSkipTitle": "Saltar",
   "helpSkip": "¿Matrícula difícil? Toca Saltar para ver una solución posible y recibir otra. Las matrículas ya resueltas no vuelven a aparecer.",
   "helpLevelsTitle": "Niveles",

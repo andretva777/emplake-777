@@ -111,6 +111,8 @@
   "helpScale": "The scale shows the value of each side. When it is balanced the equality is right: tap Check to score.",
   "helpRulesTitle": "Rules",
   "helpRules": "Digits cannot be joined (1 and 2 do not make 12) and all of them must be used. Only the Easy level accepts divisions with a non-integer result.",
+  "helpOrderTitle": "Order of operations",
+  "helpOrder": "* and / are done before + and −. √, ∛ and a − in front of a number apply only to the number (or parentheses) right after them: −3**2 = (−3)**2 = 9 and √9! = (√9)! = 6. ! applies only to the number (or parentheses) right before it: 2*3! = 2*(3!) = 12. Use parentheses to change the order: −(3**2) = −9.",
   "helpSkipTitle": "Skipping",
   "helpSkip": "Plate too hard? Tap Skip to see a possible solution and get another plate. Plates you already solved never come back.",
   "helpLevelsTitle": "Levels",

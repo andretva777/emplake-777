@@ -38,6 +38,8 @@ class _HelpDialog extends StatelessWidget {
             _HelpItem(
                 Icons.balance_rounded, l10n.helpScaleTitle, l10n.helpScale),
             _HelpItem(Icons.rule_rounded, l10n.helpRulesTitle, l10n.helpRules),
+            _HelpItem(Icons.format_list_numbered_rounded, l10n.helpOrderTitle,
+                l10n.helpOrder),
             _HelpItem(
                 Icons.skip_next_rounded, l10n.helpSkipTitle, l10n.helpSkip),
             _HelpItem(Icons.keyboard_rounded, l10n.helpKeyboardTitle,

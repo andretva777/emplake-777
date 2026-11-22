@@ -700,6 +700,18 @@ abstract class AppLocalizations {
   /// **'Os dígitos não podem ser unidos (1 e 2 não formam 12) e todos precisam ser usados. Só o nível Fácil aceita divisão com resultado não inteiro.'**
   String get helpRules;
 
+  /// No description provided for @helpOrderTitle.
+  ///
+  /// In pt, this message translates to:
+  /// **'Ordem das operações'**
+  String get helpOrderTitle;
+
+  /// No description provided for @helpOrder.
+  ///
+  /// In pt, this message translates to:
+  /// **'* e / são feitos antes de + e −. √, ∛ e o − na frente de um número valem só para o número (ou parênteses) logo à frente: −3**2 = (−3)**2 = 9 e √9! = (√9)! = 6. O ! vale só para o número (ou parênteses) logo antes dele: 2*3! = 2*(3!) = 12. Use parênteses para mudar a ordem: −(3**2) = −9.'**
+  String get helpOrder;
+
   /// No description provided for @helpSkipTitle.
   ///
   /// In pt, this message translates to:

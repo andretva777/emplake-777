@@ -117,6 +117,8 @@
   "helpScale": "A balança mostra o valor de cada lado. Quando ela fica equilibrada, a igualdade está certa: toque em Verificar para pontuar.",
   "helpRulesTitle": "Regras",
   "helpRules": "Os dígitos não podem ser unidos (1 e 2 não formam 12) e todos precisam ser usados. Só o nível Fácil aceita divisão com resultado não inteiro.",
+  "helpOrderTitle": "Ordem das operações",
+  "helpOrder": "* e / são feitos antes de + e −. √, ∛ e o − na frente de um número valem só para o número (ou parênteses) logo à frente: −3**2 = (−3)**2 = 9 e √9! = (√9)! = 6. O ! vale só para o número (ou parênteses) logo antes dele: 2*3! = 2*(3!) = 12. Use parênteses para mudar a ordem: −(3**2) = −9.",
   "helpSkipTitle": "Pular",
   "helpSkip": "Achou a placa difícil? Toque em Pular para ver uma solução possível e receber outra placa. Placas já resolvidas não aparecem de novo.",
   "helpLevelsTitle": "Níveis",

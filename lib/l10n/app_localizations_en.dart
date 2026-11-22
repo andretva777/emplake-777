@@ -346,6 +346,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Digits cannot be joined (1 and 2 do not make 12) and all of them must be used. Only the Easy level accepts divisions with a non-integer result.';
 
   @override
+  String get helpOrderTitle => 'Order of operations';
+
+  @override
+  String get helpOrder =>
+      '* and / are done before + and −. √, ∛ and a − in front of a number apply only to the number (or parentheses) right after them: −3**2 = (−3)**2 = 9 and √9! = (√9)! = 6. ! applies only to the number (or parentheses) right before it: 2*3! = 2*(3!) = 12. Use parentheses to change the order: −(3**2) = −9.';
+
+  @override
   String get helpSkipTitle => 'Skipping';
 
   @override

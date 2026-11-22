@@ -346,6 +346,13 @@ class AppLocalizationsEs extends AppLocalizations {
       'Los dígitos no se pueden unir (1 y 2 no forman 12) y hay que usarlos todos. Solo el nivel Fácil acepta divisiones con resultado no entero.';
 
   @override
+  String get helpOrderTitle => 'Orden de las operaciones';
+
+  @override
+  String get helpOrder =>
+      '* y / se hacen antes que + y −. √, ∛ y el − delante de un número valen solo para el número (o paréntesis) que les sigue: −3**2 = (−3)**2 = 9 y √9! = (√9)! = 6. El ! vale solo para el número (o paréntesis) justo antes: 2*3! = 2*(3!) = 12. Usa paréntesis para cambiar el orden: −(3**2) = −9.';
+
+  @override
   String get helpSkipTitle => 'Saltar';
 
   @override
