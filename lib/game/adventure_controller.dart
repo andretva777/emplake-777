@@ -295,8 +295,7 @@ class AdventureController extends Notifier<AdventureState>
     for (var attempt = 0; attempt < 600 && chosen == null; attempt++) {
       final candidate = _random.nextInt(10000).toString().padLeft(4, '0');
       // Só placas inéditas; depois de muitas tentativas, vale repetir.
-      final repeated =
-          _seen.contains(candidate) || _solvedPlates.contains(candidate);
+      final repeated = _seen.contains(candidate) || _wasSolved(candidate);
       if (attempt < 400 && repeated) continue;
       if (!solver.isSolvable(digitsOf(candidate))) continue;
       chosen = candidate;
@@ -441,7 +440,8 @@ class AdventureController extends Notifier<AdventureState>
   /// permite os operadores usados.
   void _recordSolved() {
     final plate = state.plate;
-    if (plate == null || !_solvedPlates.add(plate)) return;
+    if (plate == null || _wasSolved(plate)) return;
+    _solvedPlates.add(plate);
     final level = Level.hardestAllowing(
       state.pieces.whereType<OpPiece>().map((p) => p.tok),
     );
@@ -453,6 +453,12 @@ class AdventureController extends Notifier<AdventureState>
         .then((_) => ref.read(progressVersionProvider.notifier).bump())
         .ignore();
   }
+
+  /// Resolvida antes (vinda da nuvem) ou nesta sessão, em qualquer modo: o
+  /// cache acima só é carregado uma vez e não vê os outros modos.
+  bool _wasSolved(String plate) =>
+      _solvedPlates.contains(plate) ||
+      ref.read(gameProvider.notifier).wasSolved(plate);
 
   /// Solução mais simples da placa atual com os operadores já liberados.
   Solution? currentSolution() {

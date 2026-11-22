@@ -10,9 +10,17 @@ class FakeProgressRepository implements ProgressRepository {
     this.delay = Duration.zero,
     this.others = const [],
     this.adventureBest = 0,
+    this.writeDelay = Duration.zero,
   }) : solved = {...?solved};
 
   final Map<String, Level> solved;
+
+  /// Placas enviadas a [markSolved], na ordem. No Firestore cada chamada
+  /// soma pontos (`FieldValue.increment`), então uma placa não pode repetir.
+  final List<String> markSolvedCalls = [];
+
+  /// Tempo até uma gravação chegar à "nuvem".
+  final Duration writeDelay;
   int skipped;
   bool failWrites;
   final Duration delay;
@@ -35,6 +43,8 @@ class FakeProgressRepository implements ProgressRepository {
   @override
   Future<void> markSolved(String plate, Level level) async {
     if (failWrites) throw StateError('offline');
+    markSolvedCalls.add(plate);
+    await Future<void>.delayed(writeDelay);
     solved[plate] = level;
   }
 

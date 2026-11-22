@@ -132,6 +132,11 @@ class GameController extends Notifier<GameState> implements LineEditor {
   /// Placas já resolvidas pelo usuário (carregadas da nuvem).
   Set<String>? _solvedPlates;
 
+  /// Placas resolvidas nesta sessão, em qualquer modo. Valem mesmo antes de
+  /// o cache acima carregar e mesmo se a gravação ainda não chegou à nuvem,
+  /// para que nenhuma placa seja gravada (e pontuada) duas vezes.
+  final Set<String> _solvedHere = {};
+
   /// Placas puladas nesta sessão, para não repetir logo em seguida.
   final Set<String> _skippedPlates = {};
 
@@ -156,6 +161,7 @@ class GameController extends Notifier<GameState> implements LineEditor {
     if (uid != _cacheUid) {
       _cacheUid = uid;
       _solvedPlates = null;
+      _solvedHere.clear();
       _skippedPlates.clear();
       _score = 0;
     }
@@ -216,7 +222,7 @@ class GameController extends Notifier<GameState> implements LineEditor {
       final repo = ref.read(progressRepositoryProvider);
       final progress =
           repo == null ? const UserProgress() : await repo.fetchProgress();
-      _solvedPlates = {...progress.solved.keys};
+      _solvedPlates = {...progress.solved.keys, ..._solvedHere};
       _score = progress.score;
     }
     state = state.copyWith(score: _score);
@@ -231,13 +237,12 @@ class GameController extends Notifier<GameState> implements LineEditor {
   /// Sorteia uma placa que o usuário ainda não resolveu e que tenha solução
   /// no nível atual.
   void _drawPlate() {
-    final solved = _solvedPlates ?? const <String>{};
     final solver = Solver(state.level);
     String? chosen;
     for (var attempt = 0; attempt < 400 && chosen == null; attempt++) {
       final candidate = _random.nextInt(10000).toString().padLeft(4, '0');
       if (candidate == state.plate) continue;
-      if (solved.contains(candidate)) continue;
+      if (wasSolved(candidate)) continue;
       // Depois de muitas tentativas, placas puladas voltam a valer.
       if (attempt < 200 && _skippedPlates.contains(candidate)) continue;
       if (!solver.isSolvable(digitsOf(candidate))) continue;
@@ -343,6 +348,7 @@ class GameController extends Notifier<GameState> implements LineEditor {
       return;
     }
     _solvedPlates?.add(plate);
+    _solvedHere.add(plate);
     _score += level.points;
     _update(state.copyWith(
       solved: true,
@@ -381,13 +387,17 @@ class GameController extends Notifier<GameState> implements LineEditor {
   /// Avança para a próxima placa depois de resolver a atual.
   void next() => _specific ? changePlate() : _drawPlate();
 
-  /// O jogador já resolveu esta placa antes.
-  bool wasSolved(String plate) => _solvedPlates?.contains(plate) ?? false;
+  /// O jogador já resolveu esta placa (antes ou nesta sessão, em qualquer
+  /// modo).
+  bool wasSolved(String plate) =>
+      _solvedHere.contains(plate) || (_solvedPlates?.contains(plate) ?? false);
 
   /// Placa resolvida e gravada pelo modo aventura. Entra no cache para não
-  /// ser sorteada de novo; sem cache carregado, ela virá da nuvem depois.
+  /// ser sorteada nem gravada de novo.
   void addSolved(String plate, int points) {
+    _solvedHere.add(plate);
     final solved = _solvedPlates;
+    // Sem cache carregado, a pontuação virá da nuvem ao carregar.
     if (solved == null || !solved.add(plate)) return;
     _score += points;
     state = state.copyWith(score: _score);

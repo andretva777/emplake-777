@@ -130,6 +130,67 @@ void main() {
     expect(c.read(gameProvider).score, Level.hard.points);
   });
 
+  test('placa resolvida em outro modo não pontua de novo na aventura',
+      () async {
+    final (c, repo) = await setUp(prefs: {
+      'adventure.demo': saved(),
+      'game.demo': jsonEncode({
+        'level': 'hard',
+        'plate': '2222',
+        'pieces': '22=22',
+        'solved': false,
+      }),
+    });
+    final adventure = c.read(adventureProvider.notifier);
+    final game = c.read(gameProvider.notifier);
+    // A aventura carrega da nuvem antes de a placa ser resolvida.
+    await adventure.ensureReady();
+    await game.ensureReady();
+    game.insertAt(1, Tok.plus);
+    game.insertAt(5, Tok.times); // 2+2 = 2*2
+    await game.check();
+    expect(repo.markSolvedCalls, ['2222']);
+
+    adventure.insertAt(1, Tok.plus);
+    adventure.insertAt(5, Tok.times);
+    adventure.check();
+    await Future<void>.delayed(Duration.zero);
+    expect(c.read(adventureProvider).solved, isTrue);
+    expect(repo.markSolvedCalls, ['2222']);
+    expect(c.read(gameProvider).score, Level.hard.points);
+  });
+
+  test('placa resolvida na aventura antes de o jogo carregar não repontua',
+      () async {
+    // A gravação da aventura ainda não chegou à nuvem quando o jogo carrega.
+    final (c, repo) = await setUp(
+      prefs: {
+        'adventure.demo': saved(),
+        'game.demo': jsonEncode({
+          'level': 'hard',
+          'plate': '2222',
+          'pieces': '22=22',
+          'solved': false,
+        }),
+      },
+      repo: FakeProgressRepository(writeDelay: const Duration(seconds: 1)),
+    );
+    final adventure = c.read(adventureProvider.notifier);
+    await adventure.ensureReady();
+    adventure.insertAt(1, Tok.plus);
+    adventure.insertAt(5, Tok.times);
+    adventure.check();
+    expect(repo.markSolvedCalls, ['2222']);
+
+    final game = c.read(gameProvider.notifier);
+    await game.ensureReady();
+    // A placa salva no jogo já foi resolvida: sai do jogo.
+    expect(c.read(gameProvider).plate, isNot('2222'));
+    expect(game.wasSolved('2222'), isTrue);
+    await Future<void>.delayed(const Duration(seconds: 2));
+    expect(repo.markSolvedCalls, ['2222']);
+  });
+
   test('não sorteia placas que o jogador já resolveu', () async {
     // Só as placas começadas em 1 continuam inéditas.
     final solved = {
