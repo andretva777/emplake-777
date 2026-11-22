@@ -333,8 +333,9 @@ abstract final class OperatorFlights {
     if (to == null) return;
     playFlyBack(context, [
       Flight(
+        // Sai de onde a peça arrastada estava desenhada.
         from: Rect.fromCenter(
-          center: pointer,
+          center: feedbackCenterOf(pointer),
           width: kDragFeedbackSize.width,
           height: kDragFeedbackSize.height,
         ),

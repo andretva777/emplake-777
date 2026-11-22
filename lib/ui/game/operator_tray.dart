@@ -191,13 +191,15 @@ class _OperatorKey extends StatelessWidget {
     final Widget key = enabled
         ? MouseRegion(
             cursor: SystemMouseCursors.click,
-            child: Draggable<DragPayload>(
-              data: DragPayload.fromKeypad(tok),
-              maxSimultaneousDrags: 1,
-              dragAnchorStrategy: (_, _, _) => kDragAnchor,
-              feedback: DragFeedback(payload: DragPayload.fromKeypad(tok)),
-              childWhenDragging: face(opacity: 0.35),
-              child: face(onTap: onInsert),
+            child: DragPointerKind(
+              child: Draggable<DragPayload>(
+                data: DragPayload.fromKeypad(tok),
+                maxSimultaneousDrags: 1,
+                dragAnchorStrategy: dragAnchor,
+                feedback: DragFeedback(payload: DragPayload.fromKeypad(tok)),
+                childWhenDragging: face(opacity: 0.35),
+                child: face(onTap: onInsert),
+              ),
             ),
           )
         : face(opacity: 0.4);

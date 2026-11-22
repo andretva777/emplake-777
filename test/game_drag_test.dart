@@ -1,5 +1,6 @@
 import 'package:emplake/game/game_controller.dart';
 import 'package:emplake/game/tokens.dart';
+import 'package:emplake/ui/game/drag_payload.dart';
 import 'package:emplake/ui/game/equation_line.dart';
 import 'package:emplake/ui/game/operator_tray.dart';
 import 'package:flutter/gestures.dart';
@@ -158,6 +159,31 @@ void main() {
     await type(LogicalKeyboardKey.keyQ, 'q');
     expect(line(c.read(gameProvider)), '8+1=31*');
   });
+
+  for (final kind in [PointerDeviceKind.touch, PointerDeviceKind.mouse]) {
+    testWidgets('posição da peça arrastada com ${kind.name}', (tester) async {
+      await pumpGame(tester);
+      final from =
+          tester.getCenter(find.byKey(OperatorTray.valueKeyFor(Tok.plus)));
+      final pointer = from - const Offset(0, 200);
+      final gesture = await tester.startGesture(from, kind: kind);
+      await tester.pump(const Duration(milliseconds: 50));
+      await gesture.moveTo(from - const Offset(0, 20));
+      await tester.pump();
+      await gesture.moveTo(pointer);
+      await tester.pump();
+      final rect = tester.getRect(find.byType(DragFeedback));
+      expect(rect.center.dx, closeTo(pointer.dx, 0.5));
+      if (kind == PointerDeviceKind.touch) {
+        // Inteira acima do dedo, com folga.
+        expect(rect.bottom, lessThan(pointer.dy - 24));
+      } else {
+        expect(rect.center.dy, closeTo(pointer.dy, 0.5));
+      }
+      await gesture.up();
+      await tester.pump(const Duration(seconds: 1));
+    });
+  }
 
   testWidgets('arrastar com o mouse também funciona', (tester) async {
     final c = await pumpGame(tester);

@@ -292,10 +292,17 @@ class _Slot extends StatelessWidget {
     );
     return MouseRegion(
       cursor: SystemMouseCursors.grab,
-      child: Draggable<DragPayload>(
+      child: DragPointerKind(
+        child: _lineDraggable(payload, piece, tile),
+      ),
+    );
+  }
+
+  Widget _lineDraggable(DragPayload payload, Piece piece, Widget tile) =>
+      Draggable<DragPayload>(
         data: payload,
         maxSimultaneousDrags: 1,
-        dragAnchorStrategy: (_, _, _) => kDragAnchor,
+        dragAnchorStrategy: dragAnchor,
         feedback: DragFeedback(payload: payload),
         childWhenDragging: Opacity(
           opacity: 0.25,
@@ -312,9 +319,7 @@ class _Slot extends StatelessWidget {
           }
         },
         child: tile,
-      ),
-    );
-  }
+      );
 }
 
 class _Tile extends StatelessWidget {

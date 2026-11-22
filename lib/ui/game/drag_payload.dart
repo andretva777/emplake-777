@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../game/tokens.dart';
@@ -23,11 +24,45 @@ class DragPayload {
 /// Tamanho da peça que acompanha o dedo/mouse.
 const Size kDragFeedbackSize = Size(56, 52);
 
-/// O ponto da peça que fica sob o ponteiro: o centro dela. Assim a posição do
-/// ponteiro é `details.offset + kDragAnchor`.
-const Offset kDragAnchor = Offset(28, 26);
+/// Com o mouse, o ponteiro fica no centro da peça arrastada.
+const Offset _mouseAnchor = Offset(28, 26);
 
-Offset pointerOf(Offset feedbackOffset) => feedbackOffset + kDragAnchor;
+/// No toque, a peça fica um pouco acima do dedo, para que nem ela nem a
+/// marca de onde ela vai entrar fiquem escondidas sob ele.
+const Offset _touchAnchor = Offset(28, 52 + 36);
+
+/// Tipo do último ponteiro que tocou numa peça arrastável.
+PointerDeviceKind _lastKind = PointerDeviceKind.mouse;
+
+/// Ponto da peça arrastada que fica sob o ponteiro (no arrasto atual).
+Offset _activeAnchor = _mouseAnchor;
+
+/// Estratégia de âncora dos arrastos: escolhe a âncora pelo tipo do ponteiro.
+Offset dragAnchor(Draggable<Object> draggable, BuildContext context, Offset _) =>
+    _activeAnchor = switch (_lastKind) {
+      PointerDeviceKind.mouse || PointerDeviceKind.trackpad => _mouseAnchor,
+      _ => _touchAnchor,
+    };
+
+/// Posição do ponteiro a partir da posição da peça arrastada.
+Offset pointerOf(Offset feedbackOffset) => feedbackOffset + _activeAnchor;
+
+/// Centro da peça arrastada quando o ponteiro está em [pointer].
+Offset feedbackCenterOf(Offset pointer) =>
+    pointer - _activeAnchor + kDragFeedbackSize.center(Offset.zero);
+
+/// Anota o tipo do ponteiro que toca em [child] (antes de o arrasto começar).
+class DragPointerKind extends StatelessWidget {
+  const DragPointerKind({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Listener(
+        onPointerDown: (event) => _lastKind = event.kind,
+        child: child,
+      );
+}
 
 /// Peça que acompanha o ponteiro durante o arrasto.
 class DragFeedback extends StatelessWidget {
