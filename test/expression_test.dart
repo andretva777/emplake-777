@@ -20,6 +20,23 @@ List<Piece> pieces(String s) {
 EquationResult eval(String s, [Level level = Level.easy]) =>
     evaluateEquation(pieces(s), level);
 
+/// O que o jogador digitaria para obter [n] (códigos de [Tok] e dígitos).
+String typeOf(Node n) => switch (n) {
+      Num(:final value) => '$value',
+      Paren(:final inner) => '(${typeOf(inner)})',
+      Neg(:final inner) => '-${typeOf(inner)}',
+      Bin(:final op, :final left, :final right) =>
+        '${typeOf(left)}${op.code}${typeOf(right)}',
+      Unary(:final kind, :final inner) => switch (kind) {
+          UnaryKind.sqrt => 'r${typeOf(inner)}',
+          UnaryKind.cbrt => 'c${typeOf(inner)}',
+          UnaryKind.fact => '${typeOf(inner)}!',
+          UnaryKind.abs => '|${typeOf(inner)}|',
+          UnaryKind.floor => '[${typeOf(inner)}]',
+          UnaryKind.ceil => '{${typeOf(inner)}}',
+        },
+    };
+
 void main() {
   group('avaliação', () {
     test('exemplo do enunciado: √(8+1) = 3**1', () {
@@ -175,6 +192,22 @@ void main() {
           final l = s!.left.eval(allowFractions: level.allowsFractions);
           final r = s.right.eval(allowFractions: level.allowsFractions);
           expect(nearlyEqual(l, r), isTrue, reason: s.latex());
+        }
+      }
+    });
+
+    test('a solução mostrada ao pular pode ser digitada como está', () {
+      // A árvore do solver, digitada peça a peça, tem o mesmo valor ao ser
+      // lida pelo analisador: as precedências dos dois concordam.
+      for (final level in Level.values) {
+        final solver = Solver(level);
+        for (var n = 0; n < 10000; n += 97) {
+          final digits = n.toString().padLeft(4, '0');
+          final s = solver.solve(digits.split('').map(int.parse).toList());
+          if (s == null) continue;
+          final typed = '${typeOf(s.left)}=${typeOf(s.right)}';
+          final r = eval(typed, level);
+          expect(r.isCorrect, isTrue, reason: '$digits $level: $typed ${r.error}');
         }
       }
     });

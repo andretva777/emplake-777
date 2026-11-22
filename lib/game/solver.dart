@@ -39,6 +39,8 @@ class Solver {
         final sol = identical(small, left)
             ? Solution(entry.value, other)
             : Solution(other, entry.value);
+        // A chave arredonda o valor; confirma que os lados são mesmo iguais.
+        if (!_holds(sol)) continue;
         if (best == null || sol.cost < best.cost) best = sol;
       }
     }
@@ -49,6 +51,11 @@ class Solver {
 
   static int _key(double v) => (v * 1e6).round();
 
+  bool _holds(Solution s) => nearlyEqual(
+        s.left.eval(allowFractions: level.allowsFractions),
+        s.right.eval(allowFractions: level.allowsFractions),
+      );
+
   void _put(Map<int, Node> into, Node node) {
     final double v;
     try {
@@ -57,6 +64,8 @@ class Solver {
       return;
     }
     if (v.abs() > _limit) return;
+    // Valores ínfimos (como 7**-9) teriam a mesma chave que o zero.
+    if (v != 0 && v.abs() < 1e-6) return;
     final key = _key(v);
     final current = into[key];
     if (current == null || node.cost < current.cost) into[key] = node;
